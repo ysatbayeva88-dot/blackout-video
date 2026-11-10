@@ -1,22 +1,10 @@
 import React from "react";
 import { Audio } from "@remotion/media";
-import { loadFont } from "@remotion/fonts";
+import "../fonts";
 import { AbsoluteFill, Easing, Sequence, interpolate, staticFile, useCurrentFrame } from "remotion";
 import { Captions } from "./Captions";
 import { Cockpit } from "./Cockpit";
 import { FPS, S, E, SCENES, duck, sceneStart, tween } from "./timeline";
-
-// Montserrat (OFL) is bundled in public/fonts so renders work offline.
-for (const weight of ["800", "900"]) {
-  for (const subset of ["latin", "cyrillic"]) {
-    loadFont({
-      family: "Montserrat",
-      url: staticFile(`fonts/montserrat-${subset}-${weight}-normal.woff2`),
-      weight,
-      unicodeRange: subset === "cyrillic" ? "U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116" : "U+0000-00FF, U+2000-206F",
-    });
-  }
-}
 
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 
