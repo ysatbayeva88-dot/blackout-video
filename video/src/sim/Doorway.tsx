@@ -63,11 +63,12 @@ export const Doorway: React.FC<{ k: number; t: number }> = ({ k, t }) => {
       <rect x={500} y={960} width={18} height={60} rx={6} fill="#5c646e" />
       <rect x={560} y={960} width={18} height={60} rx={6} fill="#5c646e" />
       {/* captain slumped over the yoke */}
-      <g>
+      <g transform="translate(-55 -60) scale(1.2)">
         <rect x={300} y={880} width={60} height={14} rx={6} fill="#25282d" />
         <path d="M212 1010 Q230 935 320 925 Q410 930 440 1000 L448 1100 L200 1100 Z" fill="url(#dwShirt)" />
         <path d="M228 960 L300 948 L300 962 L232 976 Z" fill="#d7b24a" />
         <path d="M352 948 L425 960 L420 976 L352 962 Z" fill="#d7b24a" />
+        <path d="M250 930 Q250 960 280 962 L380 962 Q410 960 410 930" fill="none" stroke="#2c3036" strokeWidth={12} strokeLinecap="round" />
         <ellipse cx={330} cy={906} rx={46} ry={40} fill="#2a1c14" transform="rotate(-18 330 906)" />
         <path d="M296 892 Q330 870 368 892" fill="none" stroke="#3a2a20" strokeWidth={6} />
         {/* arm hanging down beside the seat */}
@@ -80,8 +81,8 @@ export const Doorway: React.FC<{ k: number; t: number }> = ({ k, t }) => {
         <rect x={100} y={1580} width={60} height={8} fill="#d7b24a" />
       </g>
       {/* seat backs */}
-      <path d="M100 1060 Q100 980 180 975 L430 975 Q500 980 500 1060 L520 1920 L80 1920 Z" fill="url(#dwSeat)" />
-      <path d="M150 1000 Q150 960 200 958 L400 958 Q450 960 450 1000 L455 1060 L145 1060 Z" fill="#1e2126" />
+      <path d="M110 1330 Q110 1260 190 1255 L430 1255 Q500 1260 500 1330 L520 1920 L80 1920 Z" fill="url(#dwSeat)" />
+      <path d="M160 1280 Q160 1245 210 1243 L400 1243 Q450 1245 450 1280 L455 1330 L155 1330 Z" fill="#1e2126" />
       <path d="M600 1000 Q600 930 680 925 L920 925 Q990 930 990 1000 L1010 1920 L580 1920 Z" fill="url(#dwSeat)" />
       <path d="M650 950 Q650 905 700 902 L890 902 Q940 905 940 950 L945 1010 L645 1010 Z" fill="#1e2126" />
       {/* Alikhan running in (seen from behind) */}

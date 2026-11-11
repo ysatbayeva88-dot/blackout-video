@@ -69,14 +69,14 @@ export const ReverserSpray: React.FC<{ t: number; reverse: number }> = ({ t, rev
   return (
     <group>
       {[5, -5].flatMap((x) =>
-        Array.from({ length: 6 }).map((_, i) => {
-          const a = ((t * 1.6 + i / 6) % 1);
+        Array.from({ length: 4 }).map((_, i) => {
+          const a = ((t * 1.6 + i / 4) % 1);
           const q = bodyToWorld(p, [x * (1.25 + a * 0.6), -2.4, -3 - a * 10]);
           q.y = 0.6 + a * 2.5;
-          const sz = 2 + a * 6 + r();
+          const sz = 1.5 + a * 4 + r();
           return (
             <sprite key={`${x}${i}`} position={q} scale={[sz, sz * 0.6, 1]}>
-              <spriteMaterial map={smokeTexture()} color="#d9c7b0" transparent opacity={reverse * 0.45 * (1 - a)} depthWrite={false} />
+              <spriteMaterial map={smokeTexture()} color="#d9c7b0" transparent opacity={reverse * 0.18 * (1 - a)} depthWrite={false} />
             </sprite>
           );
         }),

@@ -42,9 +42,9 @@ const exteriorCam = (name: string, t: number, p: Pose): CameraState => {
       return { pos: v3(bodyToWorld(p, [-8.5, -5.2, -5])), lookAt: v3(bodyToWorld(p, [-2.4, -3.0, 2])), yaw: 0, pitch: 0, roll: 0, hfov: 62 };
     case "touchdown":
     default: {
-      const cam = new THREE.Vector3(-36, 2.3, AIM_Z - 75);
+      const cam = new THREE.Vector3(-42, 7, AIM_Z - 105);
       const look = p.pos.clone().add(new THREE.Vector3(0, -1.2, -8));
-      return { pos: v3(cam), lookAt: v3(look), yaw: 0, pitch: 0, roll: 0, hfov: tw(t, [sc.start, TOUCH + 0.6, sc.end], [36, 46, 62]) };
+      return { pos: v3(cam), lookAt: v3(look), yaw: 0, pitch: 0, roll: 0, hfov: tw(t, [sc.start, TOUCH + 0.6, sc.end], [34, 42, 50]) };
     }
   }
 };
@@ -58,7 +58,7 @@ const cockpitCam = (t: number, p: Pose, centerY = 560): CameraState => {
 /** Cloud deck and haze for the current point of the story. */
 const atmosphere = (t: number, camY: number) => {
   const cruise = t < scene("airport").start;
-  const clouds = cruise ? { y: 7000, opacity: 1 } : { y: 1700, opacity: 0.7 };
+  const clouds = cruise ? { y: 7000, opacity: 1 } : { y: 1700, opacity: 0.45 };
   const inCloud = cruise ? Math.max(0, 1 - Math.abs(camY - 7050) / 260) : 0;
   return {
     clouds,
