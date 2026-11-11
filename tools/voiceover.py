@@ -1,10 +1,12 @@
-"""Phrase-by-phrase ElevenLabs voiceover for scripts/plane.txt.
+"""Phrase-by-phrase ElevenLabs voiceover for scripts/<name>.txt (default: plane).
+
+Usage: python3 tools/voiceover.py [name]
 
 Outputs:
   audio/phrases/<hash>.mp3/.json   cached raw TTS keyed by voice+text (re-runs only voice new lines)
-  audio/plane_full.mp3             glued voiceover
-  audio/plane_timings.json         per-phrase and per-word timecodes (seconds)
-  audio/plane.srt                  phrase-level subtitles
+  audio/<name>_full.mp3            glued voiceover
+  audio/<name>_timings.json        per-phrase and per-word timecodes (seconds)
+  audio/<name>.srt                 phrase-level subtitles
 """
 import base64, glob, hashlib, json, os, re, shutil, subprocess, sys, urllib.request
 import numpy as np
@@ -16,11 +18,14 @@ SETTINGS = {"stability": 0.35, "similarity_boost": 0.8, "style": 0.45,
             "speed": 1.1, "use_speaker_boost": True}
 DISPATCHER_VOICE = "onwK4e9ZLuTAKqWW03F9"  # premade "Daniel - Steady Broadcaster"
 GAP, GAP_PAUSE, GAP_TOUCHDOWN = 0.2, 0.35, 0.6
+CLIMAX = ("Касание", "Глуши")  # phrases that get the long 0.6 s pause before them
+NAME = sys.argv[1] if len(sys.argv) > 1 else "plane"
 
 
 def env():
-    vals = {}
-    for line in open(os.path.join(ROOT, ".env")):
+    vals = {k: os.environ[k] for k in ("ELEVENLABS_API_KEY", "VOICE_ID") if k in os.environ}
+    path = os.path.join(ROOT, ".env")
+    for line in open(path) if os.path.exists(path) else []:
         if "=" in line:
             k, v = line.strip().split("=", 1)
             vals[k] = v
@@ -94,7 +99,7 @@ def word_times(text, al):
 def main():
     e = env()
     key, voice = e["ELEVENLABS_API_KEY"], e["VOICE_ID"]
-    lines = [l.strip() for l in open(os.path.join(ROOT, "scripts/plane.txt"), encoding="utf-8") if l.strip()]
+    lines = [l.strip() for l in open(os.path.join(ROOT, f"scripts/{NAME}.txt"), encoding="utf-8") if l.strip()]
     cache = os.path.join(ROOT, "audio/phrases")
     os.makedirs(cache, exist_ok=True)
     rng = np.random.default_rng(7)
@@ -135,7 +140,7 @@ def main():
         if speaker == "dispatcher":
             x, lead = radio(x, rng)
             offset += lead
-        gap = 0 if i == 0 else (GAP_TOUCHDOWN if text.startswith("Касание") else GAP_PAUSE if pause else GAP)
+        gap = 0 if i == 0 else (GAP_TOUCHDOWN if text.startswith(CLIMAX) else GAP_PAUSE if pause else GAP)
         out.append(np.zeros(int(SR * gap), dtype=np.float32))
         t += gap
         segments.append({
@@ -156,15 +161,15 @@ def main():
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "f32le", "-ac", "1", "-ar", str(SR),
                     "-i", "-", wav], input=full.tobytes(), check=True)
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", wav, "-b:a", "192k",
-                    os.path.join(ROOT, "audio/plane_full.mp3")], check=True)
+                    os.path.join(ROOT, f"audio/{NAME}_full.mp3")], check=True)
     os.remove(wav)
     json.dump({"duration": round(len(full) / SR, 3), "segments": segments},
-              open(os.path.join(ROOT, "audio/plane_timings.json"), "w"),
+              open(os.path.join(ROOT, f"audio/{NAME}_timings.json"), "w"),
               ensure_ascii=False, indent=1)
     def ts(x):
         ms = int(round(x * 1000))
         return f"{ms//3600000:02d}:{ms//60000%60:02d}:{ms//1000%60:02d},{ms%1000:03d}"
-    with open(os.path.join(ROOT, "audio/plane.srt"), "w", encoding="utf-8") as f:
+    with open(os.path.join(ROOT, f"audio/{NAME}.srt"), "w", encoding="utf-8") as f:
         for n, sg in enumerate(segments, 1):
             who = "[ДИСПЕТЧЕР] " if sg["speaker"] == "dispatcher" else ""
             f.write(f"{n}\n{ts(sg['start'])} --> {ts(sg['end'])}\n{who}{sg['text']}\n\n")
