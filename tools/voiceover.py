@@ -23,7 +23,7 @@ NAME = sys.argv[1] if len(sys.argv) > 1 else "plane"
 
 
 def env():
-    vals = {k: os.environ[k] for k in ("ELEVENLABS_API_KEY", "VOICE_ID") if k in os.environ}
+    vals = {k: os.environ[k] for k in ("ELEVENLABS_API_KEY", "VOICE_ID") if k in os.environ}  # .env below overrides
     path = os.path.join(ROOT, ".env")
     for line in open(path) if os.path.exists(path) else []:
         if "=" in line:
