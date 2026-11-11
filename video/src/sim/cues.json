@@ -1,0 +1,316 @@
+{
+ "duration": 64.558,
+ "touch": 53.145,
+ "scenes": [
+  {
+   "name": "hook",
+   "view": "cockpit",
+   "start": 0.0,
+   "end": 4.801
+  },
+  {
+   "name": "orbit",
+   "view": "exterior",
+   "start": 4.801,
+   "end": 7.38
+  },
+  {
+   "name": "doorway",
+   "view": "doorway",
+   "start": 7.38,
+   "end": 9.813
+  },
+  {
+   "name": "mayday",
+   "view": "cockpit",
+   "start": 9.813,
+   "end": 19.387
+  },
+  {
+   "name": "autopilot",
+   "view": "cockpit",
+   "start": 19.387,
+   "end": 24.223
+  },
+  {
+   "name": "altknob",
+   "view": "cockpit",
+   "start": 24.223,
+   "end": 27.694
+  },
+  {
+   "name": "dive",
+   "view": "exterior",
+   "start": 27.694,
+   "end": 30.506
+  },
+  {
+   "name": "airport",
+   "view": "exterior",
+   "start": 30.506,
+   "end": 33.078
+  },
+  {
+   "name": "flaps",
+   "view": "exterior",
+   "start": 33.078,
+   "end": 34.531
+  },
+  {
+   "name": "gear",
+   "view": "exterior",
+   "start": 34.531,
+   "end": 36.171
+  },
+  {
+   "name": "greens",
+   "view": "cockpit",
+   "start": 36.171,
+   "end": 37.586
+  },
+  {
+   "name": "gust",
+   "view": "cockpit",
+   "start": 37.586,
+   "end": 45.087
+  },
+  {
+   "name": "final",
+   "view": "cockpit",
+   "start": 45.087,
+   "end": 52.695
+  },
+  {
+   "name": "touchdown",
+   "view": "exterior",
+   "start": 52.695,
+   "end": 55.957
+  },
+  {
+   "name": "stop",
+   "view": "cockpit",
+   "start": 55.957,
+   "end": 64.558
+  }
+ ],
+ "sfx": [
+  {
+   "file": "alarm",
+   "start": 0.0,
+   "gain": -14,
+   "duck": -8,
+   "len": 4.7509999999999994,
+   "fade": 0.6
+  },
+  {
+   "file": "switch_toggle",
+   "start": 11.295,
+   "gain": -8,
+   "duck": -4
+  },
+  {
+   "file": "button_click",
+   "start": 14.66,
+   "gain": 0,
+   "duck": -2
+  },
+  {
+   "file": "button_click",
+   "start": 19.527,
+   "gain": -6,
+   "duck": -2
+  },
+  {
+   "file": "button_click",
+   "start": 24.473,
+   "gain": -8,
+   "duck": -3
+  },
+  {
+   "file": "button_click",
+   "start": 24.753,
+   "gain": -8,
+   "duck": -3
+  },
+  {
+   "file": "button_click",
+   "start": 25.033,
+   "gain": -8,
+   "duck": -3
+  },
+  {
+   "file": "button_click",
+   "start": 25.313,
+   "gain": -8,
+   "duck": -3
+  },
+  {
+   "file": "button_click",
+   "start": 25.593,
+   "gain": -8,
+   "duck": -3
+  },
+  {
+   "file": "button_click",
+   "start": 25.873,
+   "gain": -8,
+   "duck": -3
+  },
+  {
+   "file": "wind_descent",
+   "start": 27.544,
+   "gain": -10,
+   "duck": -8,
+   "fade": 1.0
+  },
+  {
+   "file": "switch_toggle",
+   "start": 33.278,
+   "gain": -6,
+   "duck": -3
+  },
+  {
+   "file": "gear_down",
+   "start": 34.531,
+   "gain": -9,
+   "duck": -7
+  },
+  {
+   "file": "button_click",
+   "start": 45.377,
+   "gain": -2,
+   "duck": -2
+  },
+  {
+   "file": "switch_toggle",
+   "start": 48.349,
+   "gain": -6,
+   "duck": -3
+  },
+  {
+   "file": "tire_screech",
+   "start": 53.095,
+   "gain": -6,
+   "duck": -4
+  },
+  {
+   "file": "reverse_thrust",
+   "start": 54.081,
+   "gain": -9,
+   "duck": -8,
+   "fade": 1.2
+  },
+  {
+   "file": "cabin_applause",
+   "start": 56.257,
+   "gain": -13,
+   "duck": -8,
+   "fade": 1.5
+  },
+  {
+   "file": "whoosh",
+   "start": 4.681,
+   "gain": -12,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 7.26,
+   "gain": -12,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 9.693,
+   "gain": -12,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 19.267,
+   "gain": -12,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 24.103,
+   "gain": -12,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 27.574,
+   "gain": -12,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 30.386,
+   "gain": -12,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 32.958,
+   "gain": -12,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 34.411,
+   "gain": -12,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 36.051,
+   "gain": -12,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 37.466,
+   "gain": -12,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 44.967,
+   "gain": -12,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 52.575,
+   "gain": -12,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 55.837,
+   "gain": -12,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "thud",
+   "start": 53.145,
+   "gain": -10,
+   "duck": 0,
+   "synth": true
+  }
+ ]
+}
