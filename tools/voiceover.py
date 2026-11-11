@@ -83,6 +83,11 @@ def radio(x, rng):
     return body.astype(np.float32), lead
 
 
+def plain(s):
+    """Drop stress marks (U+0301) used in scripts to steer pronunciation."""
+    return s.replace("\u0301", "")
+
+
 def word_times(text, al):
     chars = al["characters"]
     starts, ends = al["character_start_times_seconds"], al["character_end_times_seconds"]
@@ -144,9 +149,9 @@ def main():
         out.append(np.zeros(int(SR * gap), dtype=np.float32))
         t += gap
         segments.append({
-            "id": i, "speaker": speaker, "text": text,
+            "id": i, "speaker": speaker, "text": plain(text),
             "start": round(t, 3), "end": round(t + len(x) / SR, 3),
-            "words": [{"text": w["text"], "start": round(t + w["start"] + offset, 3),
+            "words": [{"text": plain(w["text"]), "start": round(t + w["start"] + offset, 3),
                        "end": round(t + w["end"] + offset, 3)} for w in words],
         })
         out.append(x)
