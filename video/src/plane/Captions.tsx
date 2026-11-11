@@ -2,6 +2,8 @@ import React from "react";
 import { Easing, interpolate } from "remotion";
 import { KEYWORDS, SEGMENTS, Segment, Word } from "./timeline";
 
+export type { Segment, Word };
+
 const YELLOW = "#FFD60A";
 const RADIO = "#7CFFA0";
 const MAX_WORDS = 4;
@@ -12,7 +14,7 @@ type Page = { seg: Segment; words: Word[]; start: number; end: number };
 const norm = (w: string) => w.toLowerCase().replace(/[^\p{L}\p{N}-]/gu, "");
 
 /** Split each phrase into short pages (≤2 lines on screen), shown word by word. */
-const PAGES: Page[] = SEGMENTS.flatMap((seg) => {
+const paginate = (segments: Segment[]): Page[] => segments.flatMap((seg) => {
   const pages: Word[][] = [[]];
   for (const w of seg.words) {
     const cur = pages[pages.length - 1];
@@ -28,11 +30,20 @@ const PAGES: Page[] = SEGMENTS.flatMap((seg) => {
   }));
 });
 
-export const Captions: React.FC<{ t: number }> = ({ t }) => {
-  const page = PAGES.find((p) => t >= p.start && t < p.end);
+const PLANE_PAGES = paginate(SEGMENTS);
+const cache = new WeakMap<Segment[], Page[]>();
+
+/** Word-by-word captions. Defaults to the plane video's timeline; other videos pass their own. */
+export const Captions: React.FC<{ t: number; segments?: Segment[]; keywords?: Record<number, string> }> = ({ t, segments, keywords = KEYWORDS }) => {
+  let pages = PLANE_PAGES;
+  if (segments) {
+    if (!cache.has(segments)) cache.set(segments, paginate(segments));
+    pages = cache.get(segments)!;
+  }
+  const page = pages.find((p) => t >= p.start && t < p.end);
   if (!page) return null;
   const isRadio = page.seg.speaker === "dispatcher";
-  const key = KEYWORDS[page.seg.id];
+  const key = keywords[page.seg.id];
   const long = page.words.reduce((n, w) => n + w.text.length, 0) > 18;
 
   return (

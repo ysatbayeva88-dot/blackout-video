@@ -100,6 +100,27 @@ def music(duration, touchdown, end_rest):
     return out
 
 
+def music_blizzard(duration, climax, calm_from, rescue, end_rest):
+    """Tension bed rising to the climax (hard cut), sparse cold drone after, warm resolve at the rescue."""
+    n = int(duration * SR)
+    t = np.arange(n) / SR
+    out = np.zeros(n)
+    a = music(climax + 4.0, climax, 0.5)[: int(climax * SR)]
+    out[: len(a)] = a
+    # cold drone (D minor-ish, very soft) from day two until the rescue
+    i0, i1 = int(calm_from * SR), int(rescue * SR)
+    tt = t[i0:i1] - calm_from
+    drone = (np.sin(2 * np.pi * 73.4 * tt) + 0.5 * np.sin(2 * np.pi * 110 * tt + 0.3 * np.sin(0.4 * tt))
+             + 0.25 * np.sin(2 * np.pi * 146.8 * tt))
+    rise = np.clip(tt / max(1e-3, tt[-1]), 0, 1)
+    out[i0:i1] += lowpass(drone, 300.0) * (0.12 + 0.25 * rise) * env_adsr(i1 - i0, 1.5, 0.4)
+    # warm major resolve from the rescue to the end
+    rt = t[i1:] - rescue
+    chord = sum(np.sin(2 * np.pi * f * rt) for f in (110, 138.6, 164.8, 220, 277.2)) / 5
+    out[i1:] += lowpass(chord, 1000.0) * env_adsr(n - i1, 2.0, end_rest) * 0.9
+    return out
+
+
 if __name__ == "__main__":
     tm = json.load(open(os.path.join(ROOT, "audio/plane_timings.json")))
     touch = next(s for s in tm["segments"] if s["text"].startswith("Касание"))["start"]

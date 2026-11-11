@@ -1,0 +1,477 @@
+{
+ "duration": 62.477,
+ "climax": 34.597,
+ "rescue": 54.483,
+ "impact": 7.484,
+ "wall": 5.984,
+ "heartbeat": [
+  27.924,
+  34.597
+ ],
+ "engine": [
+  [
+   4.758,
+   7.884
+  ],
+  [
+   18.997,
+   34.947
+  ]
+ ],
+ "scenes": [
+  {
+   "name": "hook",
+   "view": "ext",
+   "start": 0.0,
+   "end": 3.165
+  },
+  {
+   "name": "breath",
+   "view": "pov",
+   "start": 3.165,
+   "end": 4.758
+  },
+  {
+   "name": "road",
+   "view": "ext",
+   "start": 4.758,
+   "end": 7.134
+  },
+  {
+   "name": "crash",
+   "view": "ext",
+   "start": 7.134,
+   "end": 9.218
+  },
+  {
+   "name": "phone",
+   "view": "pov",
+   "start": 9.218,
+   "end": 10.184
+  },
+  {
+   "name": "t1",
+   "view": "card",
+   "start": 10.184,
+   "end": 11.36
+  },
+  {
+   "name": "door",
+   "view": "side",
+   "start": 11.36,
+   "end": 12.999
+  },
+  {
+   "name": "lost",
+   "view": "ext",
+   "start": 12.999,
+   "end": 17.997
+  },
+  {
+   "name": "engine",
+   "view": "pov",
+   "start": 17.997,
+   "end": 20.844
+  },
+  {
+   "name": "window",
+   "view": "side",
+   "start": 20.844,
+   "end": 22.484
+  },
+  {
+   "name": "t12",
+   "view": "card",
+   "start": 22.484,
+   "end": 23.937
+  },
+  {
+   "name": "buried",
+   "view": "ext",
+   "start": 23.937,
+   "end": 26.181
+  },
+  {
+   "name": "sleepy",
+   "view": "pov",
+   "start": 26.181,
+   "end": 27.924
+  },
+  {
+   "name": "wake",
+   "view": "pov",
+   "start": 27.924,
+   "end": 29.564
+  },
+  {
+   "name": "pipe",
+   "view": "ext",
+   "start": 29.564,
+   "end": 31.668
+  },
+  {
+   "name": "gas",
+   "view": "pov",
+   "start": 31.668,
+   "end": 34.547
+  },
+  {
+   "name": "keyoff",
+   "view": "pov",
+   "start": 34.547,
+   "end": 35.228
+  },
+  {
+   "name": "dig",
+   "view": "ext",
+   "start": 35.228,
+   "end": 36.611
+  },
+  {
+   "name": "relief",
+   "view": "ext",
+   "start": 36.611,
+   "end": 38.948
+  },
+  {
+   "name": "d2",
+   "view": "card",
+   "start": 38.948,
+   "end": 40.076
+  },
+  {
+   "name": "scarf",
+   "view": "ext",
+   "start": 40.076,
+   "end": 42.691
+  },
+  {
+   "name": "snow",
+   "view": "pov",
+   "start": 42.691,
+   "end": 45.12
+  },
+  {
+   "name": "bottle",
+   "view": "pov",
+   "start": 45.12,
+   "end": 47.642
+  },
+  {
+   "name": "d3",
+   "view": "card",
+   "start": 47.642,
+   "end": 48.911
+  },
+  {
+   "name": "gauges",
+   "view": "pov",
+   "start": 48.911,
+   "end": 51.99
+  },
+  {
+   "name": "move",
+   "view": "pov",
+   "start": 51.99,
+   "end": 54.383
+  },
+  {
+   "name": "rescue",
+   "view": "ext",
+   "start": 54.383,
+   "end": 56.73
+  },
+  {
+   "name": "alive",
+   "view": "pov",
+   "start": 56.73,
+   "end": 59.02
+  },
+  {
+   "name": "outro",
+   "view": "ext",
+   "start": 59.02,
+   "end": 62.477
+  }
+ ],
+ "sfx": [
+  {
+   "file": "car_skid_crash_snow",
+   "start": 6.584,
+   "gain": -4,
+   "duck": -3
+  },
+  {
+   "file": "window_crack_open",
+   "start": 21.194,
+   "gain": -6,
+   "duck": -4
+  },
+  {
+   "file": "car_engine_start",
+   "start": 17.797,
+   "gain": -6,
+   "duck": -4
+  },
+  {
+   "file": "car_engine_off",
+   "start": 34.897,
+   "gain": -2,
+   "duck": -2
+  },
+  {
+   "file": "snow_digging",
+   "start": 35.328,
+   "gain": -4,
+   "duck": -4
+  },
+  {
+   "file": "snow_crunch_steps",
+   "start": 13.199,
+   "gain": -8,
+   "duck": -5,
+   "fade": 1.2
+  },
+  {
+   "file": "fabric_flapping_wind",
+   "start": 40.076,
+   "gain": -8,
+   "duck": -5,
+   "fade": 0.6
+  },
+  {
+   "file": "rescue_vehicle_approach",
+   "start": 53.883,
+   "gain": -6,
+   "duck": -5,
+   "fade": 1.5
+  },
+  {
+   "file": "clock_tick",
+   "start": 10.184,
+   "gain": -6,
+   "duck": -2
+  },
+  {
+   "file": "clock_tick",
+   "start": 22.484,
+   "gain": -6,
+   "duck": -2
+  },
+  {
+   "file": "clock_tick",
+   "start": 38.948,
+   "gain": -6,
+   "duck": -2
+  },
+  {
+   "file": "clock_tick",
+   "start": 47.642,
+   "gain": -6,
+   "duck": -2
+  },
+  {
+   "file": "whoosh",
+   "start": 3.045,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 4.638,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 7.014,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 9.098,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 10.064,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 11.24,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 12.879,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 17.877,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 20.724,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 22.364,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 23.817,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 26.061,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 27.804,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 29.444,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 31.548,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 35.108,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 36.491,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 38.828,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 39.956,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 42.571,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 45.0,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 47.522,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 48.791,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 51.87,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 54.263,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 56.61,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "whoosh",
+   "start": 58.9,
+   "gain": -13,
+   "duck": -4,
+   "synth": true
+  },
+  {
+   "file": "thud",
+   "start": 7.484,
+   "gain": -6,
+   "duck": 0,
+   "synth": true
+  },
+  {
+   "file": "thud",
+   "start": 34.597,
+   "gain": -6,
+   "duck": 0,
+   "synth": true
+  }
+ ]
+}
