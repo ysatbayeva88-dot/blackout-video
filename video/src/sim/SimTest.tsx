@@ -34,7 +34,7 @@ export const SimTest: React.FC<{ mode: "cruise" | "final" }> = ({ mode }) => {
 
   const s: CockpitState = {
     flight: final
-      ? { pitch: 2.5, roll: 1.2, ias: 141, selSpd: 140, altFt: 100, selAlt: 1000, vs: -700, hdg: 240, radioAltFt: 100, fma: ["ARM", "LOC", "G/S"], apEngaged: false, n1: [48.2, 48.6], flaps: 30, gearDown: true, distNm: 0.5 }
+      ? { pitch: 2.5, roll: 1.2, ias: 141, selSpd: 140, altFt: 100, selAlt: 1000, vs: -700, hdg: 240, radioAltM: 30, fma: ["ARM", "LOC", "G/S"], apEngaged: false, n1: [48.2, 48.6], flaps: 30, gearDown: true, distNm: 0.5 }
       : { pitch: 2, roll: 0, ias: 282, selSpd: 282, altFt: 33000, selAlt: 33000, vs: 0, hdg: 240, fma: ["MCP SPD", "LNAV", "VNAV PTH"], apEngaged: true, n1: [86.4, 86.1], flaps: 0, gearDown: false, distNm: 112 },
     mcp: final
       ? { spd: 140, hdg: 240, alt: 1000, vs: 0, cmdA: false, knobAlt: 0, caution: false }
@@ -47,6 +47,7 @@ export const SimTest: React.FC<{ mode: "cruise" | "final" }> = ({ mode }) => {
     yokePitch: final ? 0.4 : 0,
     yokeRoll: final ? -4 : 0,
     ptt: false,
+    headset: true,
     overheadLights: 0.35,
     highlight: final ? SPOTS.thrust : SPOTS.apButton,
     highlightPulse: 0.8,

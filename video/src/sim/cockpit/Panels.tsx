@@ -132,15 +132,18 @@ export const Glareshield: React.FC<{ s: McpState }> = ({ s }) => (
     <rect x={889} y={928} width={68} height={40} rx={4} fill={s.cmdA ? "#38ff6a" : "#183020"} />
     <text x={923} y={955} fontSize={16} fill={s.cmdA ? "#052a10" : "#3b6046"} fontFamily={F} textAnchor="middle" fontWeight={900}>A/P</text>
     {/* master caution / fire warning */}
-    {[18, 1000].map((x, i) => (
+    {[18, 1000].map((x) => (
       <g key={x}>
-        <rect x={x} y={884} width={62} height={40} rx={5} fill={s.caution ? (i ? "#ff2a1f" : "#ffb000") : "#3b2a20"} />
-        <text x={x + 31} y={901} fontSize={10} fill={s.caution ? "#fff" : "#6b5040"} fontFamily={F} textAnchor="middle" fontWeight={800}>{i ? "FIRE" : "MASTER"}</text>
-        <text x={x + 31} y={915} fontSize={10} fill={s.caution ? "#fff" : "#6b5040"} fontFamily={F} textAnchor="middle" fontWeight={800}>{i ? "WARN" : "CAUTION"}</text>
+        <rect x={x} y={884} width={62} height={40} rx={5} fill={s.caution ? "#ffb000" : "#3b2a20"} />
+        <text x={x + 31} y={901} fontSize={10} fill={s.caution ? "#2a1600" : "#6b5040"} fontFamily={F} textAnchor="middle" fontWeight={800}>MASTER</text>
+        <text x={x + 31} y={915} fontSize={10} fill={s.caution ? "#2a1600" : "#6b5040"} fontFamily={F} textAnchor="middle" fontWeight={800}>CAUTION</text>
       </g>
     ))}
   </g>
 );
+
+export const THRUST_X = [525, 605];
+export const thrustHandleY = (thrust: number) => 1640 - thrust * 190;
 
 /** Centre pedestal: thrust levers, flap lever, speed brake. Gear panel on the right. */
 export const Pedestal: React.FC<{ thrust: number; flaps: number; gear: number; gearLights: boolean[]; reverse: number }> = ({ thrust, flaps, gear, gearLights, reverse }) => {
@@ -149,10 +152,10 @@ export const Pedestal: React.FC<{ thrust: number; flaps: number; gear: number; g
   return (
     <g>
       <rect x={0} y={1385} width={1080} height={535} fill="#121418" />
-      <path d="M330 1385 L750 1385 L860 1920 L220 1920 Z" fill="url(#pedestal)" stroke="#2c3138" strokeWidth={3} />
+      <path d="M380 1385 L800 1385 L900 1920 L300 1920 Z" fill="url(#pedestal)" stroke="#2c3138" strokeWidth={3} />
       {/* thrust lever slots + handles (0 = idle at bottom, 1 = full) */}
-      {[470, 560].map((x, i) => {
-        const y = 1640 - thrust * 190;
+      {THRUST_X.map((x, i) => {
+        const y = thrustHandleY(thrust);
         return (
           <g key={x}>
             <rect x={x - 7} y={1430} width={14} height={240} rx={7} fill="#08090b" />
@@ -165,22 +168,22 @@ export const Pedestal: React.FC<{ thrust: number; flaps: number; gear: number; g
           </g>
         );
       })}
-      <text x={515} y={1424} fontSize={13} fill={LABEL} fontFamily={F} textAnchor="middle" fontWeight={700}>THRUST</text>
+      <text x={565} y={1424} fontSize={13} fill={LABEL} fontFamily={F} textAnchor="middle" fontWeight={700}>THRUST</text>
       {/* flap lever */}
-      <rect x={673} y={1430} width={12} height={200} rx={6} fill="#08090b" />
+      <rect x={713} y={1430} width={12} height={200} rx={6} fill="#08090b" />
       {detents.map((d, i) => (
         <g key={d}>
-          <line x1={690} y1={1430 + (i / 8) * 190} x2={702} y2={1430 + (i / 8) * 190} stroke={LABEL} strokeWidth={2} />
-          <text x={708} y={1435 + (i / 8) * 190} fontSize={13} fill={LABEL} fontFamily={F}>{d}</text>
+          <line x1={730} y1={1430 + (i / 8) * 190} x2={742} y2={1430 + (i / 8) * 190} stroke={LABEL} strokeWidth={2} />
+          <text x={748} y={1435 + (i / 8) * 190} fontSize={13} fill={LABEL} fontFamily={F}>{d}</text>
         </g>
       ))}
-      <rect x={648} y={flapY - 14} width={62} height={28} rx={4} fill="#e8ebee" stroke="#555" strokeWidth={2} />
-      <rect x={652} y={flapY - 4} width={54} height={8} fill="#b9bec4" />
-      <text x={690} y={1424} fontSize={13} fill={LABEL} fontFamily={F} textAnchor="middle" fontWeight={700}>FLAPS</text>
+      <rect x={688} y={flapY - 14} width={62} height={28} rx={4} fill="#e8ebee" stroke="#555" strokeWidth={2} />
+      <rect x={692} y={flapY - 4} width={54} height={8} fill="#b9bec4" />
+      <text x={730} y={1424} fontSize={13} fill={LABEL} fontFamily={F} textAnchor="middle" fontWeight={700}>FLAPS</text>
       {/* speed brake */}
-      <rect x={375} y={1430} width={12} height={160} rx={6} fill="#08090b" />
-      <rect x={358} y={1440 + reverse * 60} width={46} height={24} rx={4} fill="#d8dde2" />
-      <text x={381} y={1424} fontSize={12} fill={LABEL} fontFamily={F} textAnchor="middle" fontWeight={700}>SPD BRK</text>
+      <rect x={439} y={1430} width={12} height={160} rx={6} fill="#08090b" />
+      <rect x={422} y={1440 + reverse * 60} width={46} height={24} rx={4} fill="#d8dde2" />
+      <text x={445} y={1424} fontSize={12} fill={LABEL} fontFamily={F} textAnchor="middle" fontWeight={700}>SPD BRK</text>
       {/* gear panel */}
       <rect x={860} y={1400} width={200} height={240} rx={10} fill={PANEL} stroke="#262b31" strokeWidth={3} />
       <text x={960} y={1424} fontSize={13} fill={LABEL} fontFamily={F} textAnchor="middle" fontWeight={700}>LANDING GEAR</text>
@@ -203,12 +206,21 @@ export const Pedestal: React.FC<{ thrust: number; flaps: number; gear: number; g
   );
 };
 
+export const yokeFrame = (pitch: number) => ({ x: 250, y: 1730 - pitch * 50, sc: 1.1 + pitch * 0.08 });
+
+/** Overlay coordinates of a point given in yoke-local coordinates. */
+export const yokePoint = (lx: number, ly: number, pitch: number, roll: number) => {
+  const { x, y, sc } = yokeFrame(pitch);
+  const a = (roll * Math.PI) / 180;
+  return { x: x + sc * (lx * Math.cos(a) - ly * Math.sin(a)), y: y + sc * (lx * Math.sin(a) + ly * Math.cos(a)) };
+};
+export const YOKE_LOCAL = { gripR: [190, -125], gripL: [-190, -125], ptt: [-209, -89], apDisc: [-190, -150] } as const;
+
 /** Captain's yoke. pitch: -1 (pushed forward) .. 1 (pulled back), roll in degrees. */
 export const Yoke: React.FC<{ pitch: number; roll: number; ptt: boolean; disc: boolean }> = ({ pitch, roll, ptt, disc }) => {
-  const y = 1730 + pitch * -50;
-  const s = 1.25 + pitch * 0.08;
+  const { x, y, sc } = yokeFrame(pitch);
   return (
-    <g transform={`translate(240 ${y}) scale(${s}) rotate(${roll})`}>
+    <g transform={`translate(${x} ${y}) scale(${sc}) rotate(${roll})`}>
       {/* column */}
       <rect x={-26} y={20} width={52} height={420} fill="url(#column)" />
       <rect x={-34} y={-30} width={68} height={70} rx={14} fill="#1b1d21" stroke="#3d434b" strokeWidth={3} />
@@ -266,5 +278,18 @@ export const Hand: React.FC<{ x: number; y: number; pose: "point" | "grip"; pres
         <path d="M18 70 Q-14 40 -10 6 Q-2 -6 10 4 Q20 30 34 52 Z" fill="#c38963" stroke="#9c6a49" strokeWidth={2} />
       </g>
     )}
+  </g>
+);
+
+/** Pilot headset hanging on the left window post. */
+export const Headset: React.FC = () => (
+  <g transform="translate(70 800)">
+    <path d="M-34 10 Q-34 -44 0 -44 Q34 -44 34 10" fill="none" stroke="#1d1f23" strokeWidth={9} strokeLinecap="round" />
+    <path d="M-34 10 Q-34 -44 0 -44 Q34 -44 34 10" fill="none" stroke="#4b525c" strokeWidth={4} strokeLinecap="round" />
+    <rect x={-46} y={0} width={22} height={40} rx={9} fill="#2a2e34" stroke="#5c646e" strokeWidth={2} />
+    <rect x={24} y={0} width={22} height={40} rx={9} fill="#2a2e34" stroke="#5c646e" strokeWidth={2} />
+    <path d="M-36 34 Q-30 62 2 64" fill="none" stroke="#1d1f23" strokeWidth={4} />
+    <circle cx={4} cy={64} r={6} fill="#1d1f23" />
+    <line x1={0} y1={-44} x2={0} y2={-70} stroke="#777" strokeWidth={3} />
   </g>
 );

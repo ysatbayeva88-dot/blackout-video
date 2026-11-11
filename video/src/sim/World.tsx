@@ -22,6 +22,8 @@ export type CameraState = {
   centerY?: number;
   /** screen x (px) of the optical centre (captain's seat looks through the left window) */
   centerX?: number;
+  /** if set, the camera looks at this world point (exterior shots); yaw/pitch are ignored */
+  lookAt?: [number, number, number];
 };
 
 const CameraRig: React.FC<{ cam: CameraState }> = ({ cam }) => {
@@ -41,8 +43,14 @@ const CameraRig: React.FC<{ cam: CameraState }> = ({ cam }) => {
     c.far = 160000;
     c.setViewOffset(fullW, fullH, offX > 0 ? 2 * offX : 0, off > 0 ? 2 * off : 0, W, H);
     c.position.set(...cam.pos);
-    c.rotation.order = "YXZ";
-    c.rotation.set((cam.pitch * Math.PI) / 180, (cam.yaw * Math.PI) / 180, (-cam.roll * Math.PI) / 180);
+    if (cam.lookAt) {
+      c.up.set(0, 1, 0);
+      c.lookAt(...cam.lookAt);
+      c.rotateZ((-cam.roll * Math.PI) / 180);
+    } else {
+      c.rotation.order = "YXZ";
+      c.rotation.set((cam.pitch * Math.PI) / 180, (cam.yaw * Math.PI) / 180, (-cam.roll * Math.PI) / 180);
+    }
     c.updateProjectionMatrix();
     c.updateMatrixWorld();
   }, [camera, size, cam]);
@@ -155,22 +163,43 @@ export type WorldProps = {
   cam: CameraState;
   clouds?: { y: number; opacity: number };
   fogDensity?: number;
+  fogColor?: string;
+  /** centre of the sun's shadow frustum (the aircraft in exterior shots) */
+  shadowAt?: THREE.Vector3;
   children?: React.ReactNode;
 };
 
 /** Everything outside the aircraft: sky, ground, city, airport, clouds. */
-export const World: React.FC<WorldProps> = ({ t, cam, clouds, fogDensity = 0.00006, children }) => {
+const Sun: React.FC<{ at?: THREE.Vector3 }> = ({ at }) => {
+  const light = useMemo(() => {
+    const l = new THREE.DirectionalLight("#ffb37a", 2.2);
+    l.shadow.mapSize.set(2048, 2048);
+    const sc = l.shadow.camera;
+    sc.left = -45; sc.right = 45; sc.top = 45; sc.bottom = -45; sc.near = 1; sc.far = 400;
+    l.shadow.bias = -0.0004;
+    return l;
+  }, []);
+  const c = at ?? new THREE.Vector3(0, 0, 0);
+  light.castShadow = Boolean(at);
+  light.position.set(c.x + SUN_DIR.x * 200, c.y + Math.max(SUN_DIR.y, 0.25) * 200, c.z + SUN_DIR.z * 200);
+  light.target.position.copy(c);
+  light.target.updateMatrixWorld();
+  return (
+    <>
+      <primitive object={light} />
+      <primitive object={light.target} />
+    </>
+  );
+};
+
+export const World: React.FC<WorldProps> = ({ t, cam, clouds, fogDensity = 0.00006, fogColor = HAZE, shadowAt, children }) => {
   const camPos = useMemo(() => new THREE.Vector3(...cam.pos), [cam.pos]);
   return (
     <>
       <CameraRig cam={cam} />
-      <fogExp2 attach="fog" args={[HAZE, fogDensity]} />
+      <fogExp2 attach="fog" args={[fogColor, fogDensity]} />
       <hemisphereLight args={["#ffd2b0", "#4a4048", 1.4]} />
-      <directionalLight
-        position={[SUN_DIR.x * 5000, SUN_DIR.y * 5000 + 400, SUN_DIR.z * 5000]}
-        intensity={2.2}
-        color="#ffb37a"
-      />
+      <Sun at={shadowAt} />
       <ambientLight intensity={0.15} />
       <Sky />
       <Ground />

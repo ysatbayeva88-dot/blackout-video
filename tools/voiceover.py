@@ -1,12 +1,12 @@
 """Phrase-by-phrase ElevenLabs voiceover for scripts/plane.txt.
 
 Outputs:
-  audio/phrases/NN.mp3 + NN.json   cached raw TTS (re-run skips existing ones)
+  audio/phrases/<hash>.mp3/.json   cached raw TTS keyed by voice+text (re-runs only voice new lines)
   audio/plane_full.mp3             glued voiceover
   audio/plane_timings.json         per-phrase and per-word timecodes (seconds)
   audio/plane.srt                  phrase-level subtitles
 """
-import base64, json, os, re, subprocess, sys, urllib.request
+import base64, glob, hashlib, json, os, re, shutil, subprocess, sys, urllib.request
 import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -15,7 +15,7 @@ MODEL = "eleven_multilingual_v2"
 SETTINGS = {"stability": 0.35, "similarity_boost": 0.8, "style": 0.45,
             "speed": 1.1, "use_speaker_boost": True}
 DISPATCHER_VOICE = "onwK4e9ZLuTAKqWW03F9"  # premade "Daniel - Steady Broadcaster"
-GAP, GAP_PAUSE, GAP_TOUCHDOWN = 0.25, 0.4, 0.6
+GAP, GAP_PAUSE, GAP_TOUCHDOWN = 0.2, 0.35, 0.6
 
 
 def env():
@@ -107,10 +107,20 @@ def main():
         text = text.lstrip(".").strip()
         # a spaced dash mid-phrase makes the voice hang for seconds; a comma reads cleanly
         text = re.sub(r"\s—\s", ", ", text)
-        jpath, mpath = f"{cache}/{i:02d}.json", f"{cache}/{i:02d}.mp3"
-        if not os.path.exists(jpath) or json.load(open(jpath))["text"] != text:
+        voice_id = DISPATCHER_VOICE if speaker == "dispatcher" else voice
+        h = hashlib.sha1(f"{voice_id}|{MODEL}|{json.dumps(SETTINGS, sort_keys=True)}|{text}".encode()).hexdigest()[:12]
+        jpath, mpath = f"{cache}/{h}.json", f"{cache}/{h}.mp3"
+        if not os.path.exists(jpath):
+            # reuse a clip from the old index-named cache if the text matches
+            for old in glob.glob(f"{cache}/[0-9][0-9].json"):
+                m = json.load(open(old))
+                if m["text"] == text and m["speaker"] == speaker:
+                    shutil.copy(old, jpath)
+                    shutil.copy(old[:-5] + ".mp3", mpath)
+                    break
+        if not os.path.exists(jpath):
             print(f"TTS {i:02d} [{speaker}] {text}", file=sys.stderr)
-            r = tts(DISPATCHER_VOICE if speaker == "dispatcher" else voice, text, key)
+            r = tts(voice_id, text, key)
             open(mpath, "wb").write(base64.b64decode(r["audio_base64"]))
             json.dump({"text": text, "speaker": speaker, "alignment": r["alignment"]},
                       open(jpath, "w"), ensure_ascii=False)
@@ -138,6 +148,8 @@ def main():
         t += len(x) / SR
 
     out.append(np.zeros(int(SR * 0.5), dtype=np.float32))
+    for old in glob.glob(f"{cache}/[0-9][0-9].*"):
+        os.remove(old)  # legacy index-named cache has been migrated
     full = np.concatenate(out)
     full = full / max(1e-6, np.abs(full).max()) * 0.89
     wav = os.path.join(cache, "full.wav")

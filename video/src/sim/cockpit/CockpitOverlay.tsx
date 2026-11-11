@@ -1,6 +1,6 @@
 import React from "react";
 import { EICAS, FlightData, ND, PFD } from "./Displays";
-import { Glareshield, Hand, McpState, Overhead, Pedestal, WindshieldFrame, Yoke } from "./Panels";
+import { Glareshield, Hand, Headset, McpState, Overhead, Pedestal, WindshieldFrame, Yoke } from "./Panels";
 
 export type Highlight = { x: number; y: number; w: number; h: number; round?: boolean } | null;
 
@@ -15,6 +15,7 @@ export type CockpitState = {
   yokePitch: number;
   yokeRoll: number;
   ptt: boolean;
+  headset: boolean;
   overheadLights: number;
   highlight: Highlight;
   highlightPulse: number; // 0..1
@@ -30,8 +31,9 @@ export const SPOTS = {
   altWindow: { x: 495, y: 900, w: 112, h: 34 },
   ptt: { x: 20, y: 1520, w: 50, h: 50, round: true },
   apDisc: { x: 40, y: 1470, w: 40, h: 40, round: true },
-  thrust: { x: 420, y: 1430, w: 190, h: 260 },
-  flaps: { x: 640, y: 1420, w: 100, h: 220 },
+  thrust: { x: 475, y: 1430, w: 180, h: 260 },
+  flaps: { x: 680, y: 1420, w: 100, h: 220 },
+  headset: { x: 20, y: 740, w: 100, h: 140 },
   gear: { x: 860, y: 1400, w: 200, h: 240 },
   pfd: { x: 30, y: 1025, w: 330, h: 330 },
   nd: { x: 375, y: 1025, w: 330, h: 330 },
@@ -99,6 +101,7 @@ export const CockpitOverlay: React.FC<{ s: CockpitState }> = ({ s }) => (
       <Overhead lights={s.overheadLights} />
       <WindshieldFrame />
       <Glareshield s={s.mcp} />
+      {s.headset && <Headset />}
       {/* main instrument panel */}
       <rect x={0} y={995} width={1080} height={395} fill="url(#mainPanel)" />
       <g transform="translate(30 1025) scale(0.97)"><PFD d={s.flight} /></g>

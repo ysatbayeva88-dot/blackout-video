@@ -19,7 +19,7 @@ export type FlightData = {
   selAlt: number; // ft
   vs: number; // ft/min
   hdg: number;
-  radioAltFt?: number;
+  radioAltM?: number; // shown in metres for the viewer
   fma: [string, string, string];
   apEngaged: boolean;
   n1: [number, number]; // %
@@ -154,9 +154,9 @@ export const PFD: React.FC<{ d: FlightData }> = ({ d }) => {
         {d.apEngaged ? "CMD" : "AP OFF"}
       </text>
       {/* radio altitude */}
-      {d.radioAltFt !== undefined && d.radioAltFt < 2500 && (
-        <text x={170} y={276} fontSize={24} fill={d.radioAltFt < 200 ? AMBER : WHITE} fontFamily={MONO} textAnchor="middle" fontWeight={700}>
-          {Math.max(0, Math.round(d.radioAltFt))}
+      {d.radioAltM !== undefined && d.radioAltM < 760 && (
+        <text x={170} y={276} fontSize={24} fill={d.radioAltM < 60 ? AMBER : WHITE} fontFamily={MONO} textAnchor="middle" fontWeight={700}>
+          {Math.max(0, Math.round(d.radioAltM))} M
         </text>
       )}
       {/* heading */}
