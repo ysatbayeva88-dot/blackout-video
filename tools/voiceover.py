@@ -8,7 +8,7 @@ Outputs:
   audio/<name>_timings.json        per-phrase and per-word timecodes (seconds)
   audio/<name>.srt                 phrase-level subtitles
 """
-import base64, glob, hashlib, json, os, re, shutil, subprocess, sys, urllib.request
+import base64, glob, hashlib, json, os, re, shutil, subprocess, sys, urllib.error, urllib.request
 import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -19,7 +19,12 @@ SETTINGS = {"stability": 0.35, "similarity_boost": 0.8, "style": 0.45,
 DISPATCHER_VOICE = "onwK4e9ZLuTAKqWW03F9"  # premade "Daniel - Steady Broadcaster"
 GAP, GAP_PAUSE, GAP_TOUCHDOWN = 0.2, 0.35, 0.6
 CLIMAX = ("Касание", "Глуши")  # phrases that get the long 0.6 s pause before them
-NAME = sys.argv[1] if len(sys.argv) > 1 else "plane"
+ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]
+NAME = ARGS[0] if ARGS else "plane"
+# --draft: if TTS is unavailable (e.g. quota), lines without a cached clip become silence of
+# estimated length with evenly spread word times, so the rest of the pipeline can run.
+DRAFT = "--draft" in sys.argv
+SEC_PER_CHAR = 0.06  # measured on the narrator voice at speed 1.1
 
 
 def env():
@@ -109,7 +114,7 @@ def main():
     os.makedirs(cache, exist_ok=True)
     rng = np.random.default_rng(7)
 
-    out, segments, t = [], [], 0.0
+    out, segments, t, drafts = [], [], 0.0, []
     for i, line in enumerate(lines):
         speaker = "dispatcher" if line.startswith("[ДИСПЕТЧЕР]") else "narrator"
         text = line.replace("[ДИСПЕТЧЕР]", "").strip()
@@ -128,15 +133,35 @@ def main():
                     shutil.copy(old, jpath)
                     shutil.copy(old[:-5] + ".mp3", mpath)
                     break
+        placeholder = False
         if not os.path.exists(jpath):
             print(f"TTS {i:02d} [{speaker}] {text}", file=sys.stderr)
-            r = tts(voice_id, text, key)
-            open(mpath, "wb").write(base64.b64decode(r["audio_base64"]))
-            json.dump({"text": text, "speaker": speaker, "alignment": r["alignment"]},
-                      open(jpath, "w"), ensure_ascii=False)
-        meta = json.load(open(jpath))
-        words = word_times(text, meta["alignment"])
-        x = decode(mpath)
+            try:
+                r = tts(voice_id, text, key)
+            except urllib.error.HTTPError as err:
+                if not DRAFT:
+                    raise
+                print(f"  -> placeholder ({err.code}: {err.read()[:120]!r})", file=sys.stderr)
+                placeholder = True
+            else:
+                open(mpath, "wb").write(base64.b64decode(r["audio_base64"]))
+                json.dump({"text": text, "speaker": speaker, "alignment": r["alignment"]},
+                          open(jpath, "w"), ensure_ascii=False)
+        if placeholder:
+            dur = len(plain(text)) * SEC_PER_CHAR
+            ms = [m for m in re.finditer(r"\S+", text) if re.search(r"\w", m.group())]
+            total = sum(len(m.group()) + 1 for m in ms)
+            words, acc = [], 0.04
+            for m in ms:
+                d = dur * (len(m.group()) + 1) / total
+                words.append({"text": m.group(), "start": acc, "end": acc + d * 0.9})
+                acc += d
+            x = np.zeros(int((dur + 0.2) * SR), dtype=np.float32)
+            drafts.append(i)
+        else:
+            meta = json.load(open(jpath))
+            words = word_times(text, meta["alignment"])
+            x = decode(mpath)
         # trim the TTS padding to the actual speech, small safety margins
         a = max(0.0, words[0]["start"] - 0.04)
         b = min(len(x) / SR, words[-1]["end"] + 0.12)
@@ -168,7 +193,7 @@ def main():
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", wav, "-b:a", "192k",
                     os.path.join(ROOT, f"audio/{NAME}_full.mp3")], check=True)
     os.remove(wav)
-    json.dump({"duration": round(len(full) / SR, 3), "segments": segments},
+    json.dump({"duration": round(len(full) / SR, 3), "draft_phrases": drafts, "segments": segments},
               open(os.path.join(ROOT, f"audio/{NAME}_timings.json"), "w"),
               ensure_ascii=False, indent=1)
     def ts(x):
@@ -178,7 +203,8 @@ def main():
         for n, sg in enumerate(segments, 1):
             who = "[ДИСПЕТЧЕР] " if sg["speaker"] == "dispatcher" else ""
             f.write(f"{n}\n{ts(sg['start'])} --> {ts(sg['end'])}\n{who}{sg['text']}\n\n")
-    print(f"done: {len(segments)} phrases, {len(full)/SR:.2f}s")
+    print(f"done: {len(segments)} phrases, {len(full)/SR:.2f}s"
+          + (f" — DRAFT, silent placeholders for phrases {drafts}" if drafts else ""))
 
 
 if __name__ == "__main__":
