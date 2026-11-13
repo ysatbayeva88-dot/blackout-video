@@ -168,7 +168,7 @@ ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;f
         <li>Dikidi Business-ке кіріңіз (компьютерден <span class="num">dikidi.net</span> сайты ыңғайлырақ).</li>
         <li><b>Отчёты / Есептер</b> немесе <b>Журнал записей</b> бөлімін ашып, керекті кезеңді таңдаңыз (мысалы, осы ай).</li>
         <li><b>Экспорт</b> батырмасымен Excel (.xlsx) немесе CSV файлын жүктеп алыңыз.</li>
-        <li>Сол файлды төменге тастаңыз. Платформа күнді, қызметті, бағаны және шеберді өзі табады. Бұрын енгізілген жазбалар қайталанбайды, сондықтан айына бір рет толық айды жүктей берсеңіз болады.</li>
+        <li>Сол файлды төменге тастаңыз. Платформа күнді, қызметті, бағаны және шеберді өзі табады. Бұрын енгізілген жазбалар қайталанбайды. Ай ортасында жүктесеңіз де болады: әлі болмаған жазбалар табысқа кірмейді, «алда» деп бөлек көрсетіледі. Ай соңында сол айды қайта жүктесеңіз, бағасы өзгерген жазбалар жаңарады, бас тартылғандары өшеді.</li>
       </ol>
       <div class="sub">Экспорт батырмасы көрінбесе, шеберде рұқсат жоқ болуы мүмкін. Онда салон әкімшісінен файлды сұраңыз, немесе Dikidi-дегі кестені белгілеп көшіріп, төмендегі өріске қойыңыз.</div>
     </div>
@@ -320,25 +320,29 @@ function render(){
   const inR = x => x.date>=a && x.date<=b;
   const visits = src.visits.filter(inR).sort((x,y)=> (y.date+(y.time||"")).localeCompare(x.date+(x.time||"")));
   const exps = src.expenses.filter(inR).sort((x,y)=>y.date.localeCompare(x.date));
-  const gross = visits.reduce((s,v)=>s+(+v.amount||0),0);
+  const t0 = today();
+  const future = visits.filter(v=>v.date>t0);
+  const done = visits.filter(v=>v.date<=t0);
+  const gross = done.reduce((s,v)=>s+(+v.amount||0),0);
+  const futureShare = future.reduce((s,v)=>s+(+v.amount||0),0)*pct;
   const share = gross*pct;
   const spent = exps.reduce((s,e)=>s+(+e.amount||0),0);
   const net = share - spent;
-  const days = new Set(visits.map(v=>v.date)).size;
+  const days = new Set(done.map(v=>v.date)).size;
 
   $("#tiles").innerHTML = `
-    <div class="tile hero"><span class="lbl">Шебердің табысы</span><span class="val num">${money(share)}</span><span class="hint">${Math.round(pct*100)}% түсімнен</span></div>
+    <div class="tile hero"><span class="lbl">Шебердің табысы</span><span class="val num">${money(share)}</span><span class="hint">${Math.round(pct*100)}% түсімнен${future.length?` · алда тағы ~${money(futureShare)} (${future.length} жазба)`:""}</span></div>
     <div class="tile"><span class="lbl">Таза қалғаны</span><span class="val num ${net>=0?"good":"bad"}">${money(net)}</span><span class="hint">табыс минус шығын</span></div>
     <div class="tile"><span class="lbl">Шығындар</span><span class="val num">${money(spent)}</span><span class="hint">${exps.length} шығын</span></div>
-    <div class="tile"><span class="lbl">Клиенттер төледі</span><span class="val num">${money(gross)}</span><span class="hint">${visits.length} клиент, ${days} жұмыс күні</span></div>`;
+    <div class="tile"><span class="lbl">Клиенттер төледі</span><span class="val num">${money(gross)}</span><span class="hint">${done.length} клиент, ${days} жұмыс күні</span></div>`;
 
-  renderChart(visits, pct, a, b);
-  renderServices(visits);
+  renderChart(done, pct, a, b);
+  renderServices(done);
 
-  $("#visitsCount").textContent = `${visits.length} жазба · орташа чек ${money(visits.length?gross/visits.length:0)}`;
+  $("#visitsCount").textContent = `${done.length} өткен${future.length?`, ${future.length} алдағы`:""} · орташа чек ${money(done.length?gross/done.length:0)}`;
   $("#visitsBody").innerHTML = visits.length ? visits.map(v=>`<tr>
       <td class="num" style="white-space:nowrap">${fmtDate(v.date)}${v.time?` <span class="muted">${esc(v.time)}</span>`:""}</td>
-      <td>${esc(v.client)||'<span class="muted">—</span>'}</td><td>${esc(v.service)}</td>
+      <td>${esc(v.client)||'<span class="muted">—</span>'}</td><td>${esc(v.service)}${v.date>t0?' <span class="pill">алда</span>':""}</td>
       <td class="r">${money(v.amount)}</td><td class="r">${money(v.amount*pct)}</td>
       <td>${isExample?"":`<button class="icon-btn" title="Өшіру" data-del-visit="${esc(v.id)}">✕</button>`}</td></tr>`).join("")
     : `<tr><td colspan="6" class="empty">Бұл кезеңде жазба жоқ</td></tr>`;
@@ -463,7 +467,7 @@ const CANCEL = ["отмен","не приш","неявк","cancel","no show","б
 function hash(s){ let h=5381; for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return (h>>>0).toString(36); }
 
 function buildRecords(){
-  const P=S.pending; const {rows, header, map}=P; const out=[]; let cancelled=0, bad=0;
+  const P=S.pending; const {rows, header, map}=P; const out=[]; const cancelledIds=new Set(); let cancelled=0, bad=0;
   const body = rows.slice(header+1);
   for(const r of body){
     if(!r || r.every(c=>c===""||c==null)) continue;
@@ -473,15 +477,16 @@ function buildRecords(){
     const master = String(cell("master")??"").trim();
     if(P.master && master!==P.master) continue;
     const status = norm(cell("status"));
-    if(status && CANCEL.some(c=>status.includes(c))){ cancelled++; continue; }
     let time = d.time; const tv=cell("time"); if(tv!==""){ const t2=parseDate(tv); if(t2&&t2.time) time=t2.time; else if(typeof tv==="number"&&tv<1){ const mins=Math.round(tv*1440); time=pad(Math.floor(mins/60))+":"+pad(mins%60);} else { const mm=String(tv).match(/(\d{1,2}):(\d{2})/); if(mm) time=pad(mm[1])+":"+mm[2]; } }
     const rec={date:d.date,time,client:String(cell("client")??"").trim(),service:String(cell("service")??"").trim(),master,amount:Math.round(amt*100)/100,source:"dikidi"};
-    rec.id="d"+hash([rec.date,rec.time,norm(rec.client),norm(rec.service),rec.amount].join("|"));
+    // id ignores price, so a re-imported record whose price changed updates instead of doubling
+    rec.id="d"+hash([rec.date,rec.time,norm(rec.client),norm(rec.service)].join("|"));
+    if(status && CANCEL.some(c=>status.includes(c))){ cancelled++; cancelledIds.add(rec.id); continue; }
     out.push(rec);
   }
   // identical rows inside one file (same client, same time, same service) are merged
   const uniq=[...new Map(out.map(r=>[r.id,r])).values()];
-  return {list:uniq, cancelled, bad};
+  return {list:uniq, cancelled, bad, cancelledIds};
 }
 
 function openMapping(rows){
@@ -505,28 +510,36 @@ function drawMapping(){
   drawPreview();
 }
 function drawPreview(){
-  const {list,cancelled,bad}=buildRecords();
-  const have=new Set(S.visits.map(v=>v.id));
-  const fresh=list.filter(r=>!have.has(r.id));
+  const {list,cancelled,bad,cancelledIds}=buildRecords();
+  const haveMap=new Map(S.visits.map(v=>[v.id,v])); const have={has:id=>haveMap.has(id)};
+  const fresh=list.filter(r=>!haveMap.has(r.id));
+  const changed=list.filter(r=>{ const o=haveMap.get(r.id); return o && (+o.amount!==+r.amount || o.service!==r.service); });
+  const removed=[...cancelledIds].filter(id=>haveMap.has(id) && !list.some(r=>r.id===id));
   const sum=fresh.reduce((s,r)=>s+r.amount,0);
-  S.pending.fresh=fresh;
+  const upcoming=list.filter(r=>r.date>today()).length;
+  S.pending.fresh=fresh; S.pending.changed=changed; S.pending.removed=removed;
+  const total=fresh.length+changed.length+removed.length;
   const missing = ["date","amount"].filter(f=>S.pending.map[f]===undefined);
   $("#importStats").innerHTML = missing.length
     ? `<b>Күні мен бағасы бар бағандарды таңдаңыз</b>, сонда жазбалар оқылады.`
-    : `Табылды <b class="num">${list.length}</b> жазба: <b class="num">${fresh.length}</b> жаңа (${money(sum)}), ${list.length-fresh.length} бұрын енгізілген.` +
+    : `Табылды <b class="num">${list.length}</b> жазба: <b class="num">${fresh.length}</b> жаңа (${money(sum)}), ${list.length-fresh.length-changed.length} өзгеріссіз.` +
+      (changed.length?` Бағасы өзгерген <b class="num">${changed.length}</b> жазба жаңартылады.`:"") +
+      (removed.length?` Кейін бас тартылған <b class="num">${removed.length}</b> жазба өшіріледі.`:"") +
+      (upcoming?` Оның ішінде ${upcoming} жазба әлі алда: олар күні келгенде табысқа өздігінен қосылады.`:"") +
       (cancelled?` Бас тартылған ${cancelled} жазба есепке алынбады.`:"") + (bad?` ${bad} жолда күн немесе баға оқылмады.`:"");
-  $("#previewBody").innerHTML = list.slice(0,10).map(r=>`<tr><td class="num" style="white-space:nowrap">${fmtDate(r.date)} ${esc(r.time)}</td><td>${esc(r.client)}</td><td>${esc(r.service)}</td><td class="r">${money(r.amount)}</td><td>${have.has(r.id)?'<span class="pill">бар</span>':'<span class="pill ok">жаңа</span>'}</td></tr>`).join("") || `<tr><td colspan="5" class="empty">Жазба жоқ</td></tr>`;
-  $("#doImport").disabled=!fresh.length; $("#doImport").textContent = fresh.length? `${fresh.length} жазбаны қосу` : "Қосатын жаңа жазба жоқ";
+  $("#previewBody").innerHTML = list.slice(0,10).map(r=>`<tr><td class="num" style="white-space:nowrap">${fmtDate(r.date)} ${esc(r.time)}</td><td>${esc(r.client)}</td><td>${esc(r.service)}</td><td class="r">${money(r.amount)}</td><td>${!haveMap.has(r.id)?'<span class="pill ok">жаңа</span>':changed.includes(r)?'<span class="pill warn">өзгерді</span>':'<span class="pill">бар</span>'}</td></tr>`).join("") || `<tr><td colspan="5" class="empty">Жазба жоқ</td></tr>`;
+  $("#doImport").disabled=!total; $("#doImport").textContent = total? (changed.length||removed.length? `Сақтау (${total} өзгеріс)` : `${fresh.length} жазбаны қосу`) : "Жаңа өзгеріс жоқ";
 }
 $("#masterSel").addEventListener("change",e=>{ S.pending.master=e.target.value; drawPreview(); });
 $("#cancelImport").addEventListener("click",()=>{ S.pending=null; $("#mapCard").hidden=true; });
 $("#doImport").addEventListener("click",async()=>{
-  const P=S.pending; if(!P||!P.fresh.length) return; const btn=$("#doImport"); btn.disabled=true;
-  const list=P.fresh.map(r=>Object.assign({},r,{addedAt:Date.now()}));
+  const P=S.pending; if(!P||!(P.fresh.length+P.changed.length+P.removed.length)) return; const btn=$("#doImport"); btn.disabled=true;
+  const list=[...P.fresh,...P.changed].map(r=>Object.assign({},r,{addedAt:Date.now()}));
   try{
-    await putMany("visits",list,(d,t)=>btn.textContent=`Сақталуда… ${d}/${t}`);
+    if(list.length) await putMany("visits",list,(d,t)=>btn.textContent=`Сақталуда… ${d}/${t}`);
+    for(const id of P.removed) await delDoc("visits",id);
     if(P.master && P.master!==S.settings.master){ S.settings.master=P.master; await saveSettings(); }
-    toast(`${list.length} жазба қосылды`); S.pending=null; $("#mapCard").hidden=true; showTab("overview");
+    toast(`Сақталды: ${P.fresh.length} жаңа, ${P.changed.length} жаңартылды, ${P.removed.length} өшірілді`); S.pending=null; $("#mapCard").hidden=true; showTab("overview");
   }catch(err){ toast("Сақталмады: "+(err.message||err.code)); btn.disabled=false; drawPreview(); }
 });
 
