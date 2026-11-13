@@ -1,0 +1,603 @@
+<title>Шебер кассасы</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rubik:wght@500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* Layout: one narrow column like a salon ledger — summary tiles on top, tabbed work areas below. */
+:root{
+  --bg:#f6f4f7; --surface:#ffffff; --surface-2:#efebf1; --line:#e1dbe4;
+  --fg:#231b28; --muted:#6c6274;
+  --accent:#a3245c; --accent-soft:#f7e3ec; --on-accent:#ffffff;
+  --good:#1f7a55; --good-soft:#e1f2ea; --bad:#b4372a; --bad-soft:#f8e4e1;
+  --font-display:"Rubik",system-ui,sans-serif; --font-body:"Inter",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17121a; --surface:#211a25; --surface-2:#2b2330; --line:#3a3040;
+  --fg:#f1ecf3; --muted:#a89cae;
+  --accent:#e66a9d; --accent-soft:#3d2030; --on-accent:#1a0e14;
+  --good:#5cc597; --good-soft:#173328; --bad:#ef8273; --bad-soft:#3a1d19; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17121a; --surface:#211a25; --surface-2:#2b2330; --line:#3a3040;
+  --fg:#f1ecf3; --muted:#a89cae;
+  --accent:#e66a9d; --accent-soft:#3d2030; --on-accent:#1a0e14;
+  --good:#5cc597; --good-soft:#173328; --bad:#ef8273; --bad-soft:#3a1d19; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
+.wrap{max-width:860px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:1.6rem} h2{font-size:1.15rem} h3{font-size:1rem}
+.num{font-variant-numeric:tabular-nums}
+header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.sub{color:var(--muted);font-size:.9rem}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;padding:3px 10px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.pill.ok{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--accent-soft);color:var(--accent)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+nav.tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:12px;overflow-x:auto}
+nav.tabs button{flex:1 0 auto;border:0;background:transparent;color:var(--muted);font:600 .9rem var(--font-body);padding:9px 12px;border-radius:9px;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgb(0 0 0 / .08)}
+.periods{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:6px 12px;border-radius:999px;font:500 .85rem var(--font-body);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:700px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.tile .lbl{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.tile .val{font-family:var(--font-display);font-size:1.35rem;font-weight:600;overflow-wrap:anywhere}
+.tile .hint{font-size:.8rem;color:var(--muted)}
+.tile.hero{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tile.hero .lbl,.tile.hero .hint{color:var(--on-accent);opacity:.85}
+.val.good{color:var(--good)} .val.bad{color:var(--bad)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.row>*{min-width:0}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted);font-weight:500;flex:1 1 140px}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%}
+textarea{min-height:110px;font-size:.85rem}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:0;background:var(--accent);color:var(--on-accent);font:600 .9rem var(--font-body);padding:9px 16px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.btn.ghost{background:var(--surface-2);color:var(--fg)}
+.btn.danger{background:var(--bad-soft);color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:default}
+.icon-btn{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:1rem;padding:2px 6px;border-radius:6px}
+.icon-btn:hover{color:var(--bad);background:var(--bad-soft)}
+.tbl-wrap{overflow-x:auto;margin:0 -4px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.muted{color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:18px;font-size:.9rem}
+.banner{background:var(--accent-soft);color:var(--fg);border-radius:12px;padding:10px 14px;font-size:.88rem}
+.banner b{color:var(--accent)}
+ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:.9rem}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:20px;text-align:center;color:var(--muted);cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.chart svg{width:100%;height:auto;display:block}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.9rem;z-index:20;max-width:calc(100% - 32px)}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--bad-soft);padding:10px;border-radius:10px;font-size:.88rem}
+.split{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:760px){.split{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}}
+.bar-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;font-size:.88rem}
+.bar-row .track{grid-column:1/-1;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.bar-row .fill{height:100%;background:var(--accent);border-radius:3px}
+@media (prefers-reduced-motion:no-preference){.fill{transition:width .3s}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Шебер кассасы</h1>
+      <div class="sub">Салондағы табыс пен шығын. Шебердің үлесі — түсімнің <b id="pctLabel" class="num">60%</b></div>
+    </div>
+    <span id="syncPill" class="pill"><span class="dot"></span>Жүктелуде…</span>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="overview" aria-selected="true">Шолу</button>
+    <button role="tab" data-tab="visits" aria-selected="false">Жазбалар</button>
+    <button role="tab" data-tab="expenses" aria-selected="false">Шығындар</button>
+    <button role="tab" data-tab="import" aria-selected="false">Dikidi-ден алу</button>
+    <button role="tab" data-tab="settings" aria-selected="false">Баптаулар</button>
+  </nav>
+
+  <div class="periods" id="periods">
+    <button class="chip" data-p="week">Осы апта</button>
+    <button class="chip" data-p="month" aria-pressed="true">Осы ай</button>
+    <button class="chip" data-p="prev">Өткен ай</button>
+    <button class="chip" data-p="year">Осы жыл</button>
+    <button class="chip" data-p="all">Барлығы</button>
+    <button class="chip" data-p="custom">Күндерді таңдау</button>
+    <span id="customRange" class="row" hidden style="gap:6px">
+      <input type="date" id="fromDate" style="width:auto"><span class="muted">—</span><input type="date" id="toDate" style="width:auto">
+    </span>
+  </div>
+
+  <div id="exampleBanner" class="banner" hidden>
+    Бұл <b>мысал деректер</b>, жұмыстың қалай көрінетінін көрсету үшін. «Dikidi-ден алу» бөлімінде файл жүктесеңіз, мұнда нақты сандар шығады.
+  </div>
+
+  <section class="tiles" id="tiles"></section>
+
+  <!-- OVERVIEW -->
+  <section data-view="overview" class="split">
+    <div class="card chart"><h2>Күн сайынғы табыс</h2><div id="chart"></div></div>
+    <div class="card"><h2>Қызметтер бойынша</h2><div id="byService"></div></div>
+  </section>
+
+  <!-- VISITS -->
+  <section data-view="visits" class="card" hidden>
+    <div class="row" style="justify-content:space-between;align-items:center"><h2>Клиент жазбалары</h2><span class="sub" id="visitsCount"></span></div>
+    <details>
+      <summary style="cursor:pointer;color:var(--accent);font-weight:600">+ Қолмен жазба қосу</summary>
+      <form id="visitForm" class="row" style="margin-top:10px">
+        <label class="f">Күні<input type="date" id="vDate" required></label>
+        <label class="f">Клиент<input id="vClient" placeholder="Аты"></label>
+        <label class="f">Қызмет<input id="vService" placeholder="Мысалы: шаш бояу" required></label>
+        <label class="f">Бағасы, ₸<input id="vAmount" type="number" min="0" step="100" required></label>
+        <button class="btn" type="submit">Қосу</button>
+      </form>
+    </details>
+    <div class="tbl-wrap"><table><thead><tr><th>Күні</th><th>Клиент</th><th>Қызмет</th><th class="r">Бағасы</th><th class="r">Шебердің үлесі</th><th></th></tr></thead><tbody id="visitsBody"></tbody></table></div>
+  </section>
+
+  <!-- EXPENSES -->
+  <section data-view="expenses" class="card" hidden>
+    <h2>Шығындар</h2>
+    <form id="expForm" class="row">
+      <label class="f">Күні<input type="date" id="eDate" required></label>
+      <label class="f">Түрі<select id="eCat">
+        <option>Материалдар (бояу, күтім)</option><option>Құрал-жабдық</option><option>Жол ақысы</option>
+        <option>Тамақ</option><option>Салонға төлем</option><option>Оқу, курстар</option><option>Басқа</option>
+      </select></label>
+      <label class="f">Сомасы, ₸<input type="number" id="eAmount" min="0" step="100" required></label>
+      <label class="f">Ескертпе<input id="eNote" placeholder="міндетті емес"></label>
+      <button class="btn" type="submit">Қосу</button>
+    </form>
+    <div class="tbl-wrap"><table><thead><tr><th>Күні</th><th>Түрі</th><th>Ескертпе</th><th class="r">Сомасы</th><th></th></tr></thead><tbody id="expBody"></tbody></table></div>
+  </section>
+
+  <!-- IMPORT -->
+  <section data-view="import" hidden style="display:flex;flex-direction:column;gap:18px">
+    <div class="card">
+      <h2>Dikidi-ден деректерді қалай алу керек</h2>
+      <ol class="steps">
+        <li>Dikidi Business-ке кіріңіз (компьютерден <span class="num">dikidi.net</span> сайты ыңғайлырақ).</li>
+        <li><b>Отчёты / Есептер</b> немесе <b>Журнал записей</b> бөлімін ашып, керекті кезеңді таңдаңыз (мысалы, осы ай).</li>
+        <li><b>Экспорт</b> батырмасымен Excel (.xlsx) немесе CSV файлын жүктеп алыңыз.</li>
+        <li>Сол файлды төменге тастаңыз. Платформа күнді, қызметті, бағаны және шеберді өзі табады. Бұрын енгізілген жазбалар қайталанбайды, сондықтан айына бір рет толық айды жүктей берсеңіз болады.</li>
+      </ol>
+      <div class="sub">Экспорт батырмасы көрінбесе, шеберде рұқсат жоқ болуы мүмкін. Онда салон әкімшісінен файлды сұраңыз, немесе Dikidi-дегі кестені белгілеп көшіріп, төмендегі өріске қойыңыз.</div>
+    </div>
+    <div class="card">
+      <label id="drop" class="drop" for="fileInput">
+        <b style="color:var(--fg)">Dikidi файлын осында тастаңыз</b><br>немесе басып таңдаңыз (.xlsx, .xls, .csv)
+      </label>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.txt" hidden>
+      <details>
+        <summary style="cursor:pointer;color:var(--accent);font-weight:600">Немесе кестені көшіріп қою</summary>
+        <textarea id="pasteBox" placeholder="Dikidi-дегі кестені белгілеп, Ctrl+C, содан кейін осында Ctrl+V"></textarea>
+        <button class="btn ghost" id="pasteBtn" type="button">Мәтінді оқу</button>
+      </details>
+    </div>
+    <div class="card" id="mapCard" hidden>
+      <h2>Тексеріп, қосыңыз</h2>
+      <div class="sub">Бағандар автоматты табылды. Қате болса, түзетіңіз.</div>
+      <div class="row" id="mapFields"></div>
+      <label class="f" style="max-width:320px">Қай шебердің жазбалары?<select id="masterSel"></select></label>
+      <div id="importStats" class="banner"></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Күні</th><th>Клиент</th><th>Қызмет</th><th class="r">Бағасы</th><th>Күйі</th></tr></thead><tbody id="previewBody"></tbody></table></div>
+      <div class="row"><button class="btn" id="doImport">Қосу</button><button class="btn ghost" id="cancelImport">Болдырмау</button></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section data-view="settings" hidden style="display:flex;flex-direction:column;gap:18px">
+    <div class="card">
+      <h2>Пайыз</h2>
+      <div class="row">
+        <label class="f" style="max-width:200px">Шебердің үлесі, %<input type="number" id="pctInput" min="1" max="100" step="1"></label>
+        <button class="btn" id="savePct">Сақтау</button>
+      </div>
+      <div class="sub">Клиент төлеген соманың осы бөлігі шеберге тиесілі. Қалғаны салонда қалады.</div>
+    </div>
+    <div class="card">
+      <h2>Сақтық көшірме</h2>
+      <div class="sub">Барлық деректерді мәтін ретінде көшіріп, басқа жерде сақтауға болады.</div>
+      <div class="row"><button class="btn ghost" id="copyBackup">Көшірмені алу</button></div>
+      <textarea id="backupBox" placeholder="Көшірмені осында қойып, «Қалпына келтіру» басыңыз"></textarea>
+      <div class="row"><button class="btn ghost" id="restoreBtn">Қалпына келтіру</button></div>
+    </div>
+    <div class="card">
+      <h2>Барлығын өшіру</h2>
+      <div id="wipeArea"><button class="btn danger" id="wipeBtn">Барлық жазбалар мен шығындарды өшіру</button></div>
+    </div>
+  </section>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const nf = new Intl.NumberFormat("ru-RU",{maximumFractionDigits:0});
+const money = n => nf.format(Math.round(n||0)) + " ₸";
+const MONTHS = ["қаң","ақп","нау","сәу","мам","мау","шіл","там","қыр","қаз","қар","жел"];
+const fmtDate = d => { if(!d) return ""; const [y,m,dd]=d.split("-"); return `${+dd} ${MONTHS[+m-1]} ${y}`; };
+const pad = n => String(n).padStart(2,"0");
+const iso = dt => `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
+const today = () => iso(new Date());
+
+/* ---------- state ---------- */
+const S = { visits:[], expenses:[], settings:{percent:60, master:""}, period:"month", from:"", to:"", tab:"overview", mode:"loading", pending:null };
+let db = null;
+
+/* ---------- storage: cloud db when available, otherwise this browser ---------- */
+const LS = "sheber-kassa-v1";
+function lsLoad(){ try{ const d = JSON.parse(localStorage.getItem(LS)||"null"); if(d){ S.visits=d.visits||[]; S.expenses=d.expenses||[]; S.settings=Object.assign(S.settings,d.settings||{}); } }catch(e){} }
+function lsSave(){ try{ localStorage.setItem(LS, JSON.stringify({visits:S.visits,expenses:S.expenses,settings:S.settings})); }catch(e){} }
+
+async function putDoc(coll, obj){
+  if(db){ await db.collection(coll).doc(obj.id).set(obj); }
+  else { const arr = S[coll]; const i = arr.findIndex(x=>x.id===obj.id); if(i>=0) arr[i]=obj; else arr.push(obj); lsSave(); render(); }
+}
+async function delDoc(coll, id){
+  if(db){ await db.collection(coll).doc(id).delete(); }
+  else { S[coll] = S[coll].filter(x=>x.id!==id); lsSave(); render(); }
+}
+async function saveSettings(){
+  if(db){ await db.doc("settings/main").set(S.settings); } else { lsSave(); }
+  render();
+}
+async function putMany(coll, list, onProgress){
+  if(!db){ for(const o of list){ const i=S[coll].findIndex(x=>x.id===o.id); if(i>=0) S[coll][i]=o; else S[coll].push(o);} lsSave(); render(); return; }
+  let done=0; const queue=[...list];
+  const worker = async()=>{ while(queue.length){ const o=queue.shift(); await db.collection(coll).doc(o.id).set(o); done++; onProgress&&onProgress(done,list.length);} };
+  await Promise.all(Array.from({length:Math.min(6,list.length)},worker));
+}
+
+function setMode(m){
+  S.mode=m; const p=$("#syncPill");
+  if(m==="cloud"){ p.className="pill ok"; p.innerHTML='<span class="dot"></span>Бұлтта сақталады'; }
+  else if(m==="local"){ p.className="pill warn"; p.innerHTML='<span class="dot"></span>Тек осы құрылғыда'; }
+  else if(m==="stale"){ p.className="pill warn"; p.innerHTML='<span class="dot"></span>Байланыс жоқ, деректер ескі болуы мүмкін'; }
+}
+
+async function initStore(){
+  let cap = null;
+  try{ if(window.claude && typeof window.claude.use==="function") cap = await window.claude.use("db"); }catch(e){ cap=null; }
+  if(!cap){ lsLoad(); setMode("local"); render(); return; }
+  db = cap; setMode("cloud");
+  let timer = setTimeout(()=>setMode("stale"), 10000);
+  const settle = snap => { if(!snap.metadata.fromCache){ clearTimeout(timer); setMode("cloud"); } };
+  const fail = () => { clearTimeout(timer); setMode("stale"); };
+  db.collection("visits").onSnapshot(snap=>{ S.visits=snap.docs.map(d=>d.data()); settle(snap); render(); }, fail);
+  db.collection("expenses").onSnapshot(snap=>{ S.expenses=snap.docs.map(d=>d.data()); settle(snap); render(); }, fail);
+  db.doc("settings/main").onSnapshot(snap=>{ if(snap.exists) S.settings=Object.assign({percent:60,master:""}, snap.data()); render(); }, fail);
+}
+
+/* ---------- example data (shown only while empty, never saved) ---------- */
+function exampleData(){
+  const svc=[["Әйелдер шаш қиюы",6000],["Шаш бояу",18000],["Укладка",5000],["Балаяж",30000],["Ерлер шаш қиюы",3500],["Кератин",25000]];
+  const names=["Айгерім","Динара","Жанар","Мадина","Сәуле","Ерлан","Гүлназ","Әсем"];
+  const v=[], e=[]; const now=new Date(); let seed=7; const rnd=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; };
+  for(let i=0;i<now.getDate();i++){ const d=new Date(now.getFullYear(),now.getMonth(),i+1); if(d.getDay()===1) continue;
+    const n=1+Math.floor(rnd()*4); for(let k=0;k<n;k++){ const s=svc[Math.floor(rnd()*svc.length)];
+      v.push({id:"ex"+i+"_"+k,date:iso(d),client:names[Math.floor(rnd()*names.length)],service:s[0],amount:s[1],source:"example"}); } }
+  e.push({id:"exe1",date:iso(new Date(now.getFullYear(),now.getMonth(),Math.min(3,now.getDate()))),category:"Материалдар (бояу, күтім)",amount:22000,note:"бояу, оксид"});
+  e.push({id:"exe2",date:iso(new Date(now.getFullYear(),now.getMonth(),Math.min(10,now.getDate()))),category:"Жол ақысы",amount:6000,note:"такси"});
+  return {visits:v, expenses:e};
+}
+
+/* ---------- period ---------- */
+function range(){
+  const n=new Date(), y=n.getFullYear(), m=n.getMonth();
+  switch(S.period){
+    case "week": { const d=new Date(n); const wd=(d.getDay()+6)%7; d.setDate(d.getDate()-wd); const e=new Date(d); e.setDate(d.getDate()+6); return [iso(d),iso(e)]; }
+    case "month": return [iso(new Date(y,m,1)), iso(new Date(y,m+1,0))];
+    case "prev": return [iso(new Date(y,m-1,1)), iso(new Date(y,m,0))];
+    case "year": return [`${y}-01-01`,`${y}-12-31`];
+    case "custom": return [S.from||"0000-01-01", S.to||"9999-12-31"];
+    default: return ["0000-01-01","9999-12-31"];
+  }
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(S.mode==="loading") return;
+  const pct = (+S.settings.percent||60)/100;
+  $("#pctLabel").textContent = Math.round(pct*100)+"%";
+  const pi=$("#pctInput"); if(document.activeElement!==pi) pi.value=S.settings.percent;
+  const isExample = !S.visits.length && !S.expenses.length;
+  $("#exampleBanner").hidden = !isExample;
+  const src = isExample ? exampleData() : S;
+  const [a,b] = range();
+  const inR = x => x.date>=a && x.date<=b;
+  const visits = src.visits.filter(inR).sort((x,y)=> (y.date+(y.time||"")).localeCompare(x.date+(x.time||"")));
+  const exps = src.expenses.filter(inR).sort((x,y)=>y.date.localeCompare(x.date));
+  const gross = visits.reduce((s,v)=>s+(+v.amount||0),0);
+  const share = gross*pct;
+  const spent = exps.reduce((s,e)=>s+(+e.amount||0),0);
+  const net = share - spent;
+  const days = new Set(visits.map(v=>v.date)).size;
+
+  $("#tiles").innerHTML = `
+    <div class="tile hero"><span class="lbl">Шебердің табысы</span><span class="val num">${money(share)}</span><span class="hint">${Math.round(pct*100)}% түсімнен</span></div>
+    <div class="tile"><span class="lbl">Таза қалғаны</span><span class="val num ${net>=0?"good":"bad"}">${money(net)}</span><span class="hint">табыс минус шығын</span></div>
+    <div class="tile"><span class="lbl">Шығындар</span><span class="val num">${money(spent)}</span><span class="hint">${exps.length} шығын</span></div>
+    <div class="tile"><span class="lbl">Клиенттер төледі</span><span class="val num">${money(gross)}</span><span class="hint">${visits.length} клиент, ${days} жұмыс күні</span></div>`;
+
+  renderChart(visits, pct, a, b);
+  renderServices(visits);
+
+  $("#visitsCount").textContent = `${visits.length} жазба · орташа чек ${money(visits.length?gross/visits.length:0)}`;
+  $("#visitsBody").innerHTML = visits.length ? visits.map(v=>`<tr>
+      <td class="num" style="white-space:nowrap">${fmtDate(v.date)}${v.time?` <span class="muted">${esc(v.time)}</span>`:""}</td>
+      <td>${esc(v.client)||'<span class="muted">—</span>'}</td><td>${esc(v.service)}</td>
+      <td class="r">${money(v.amount)}</td><td class="r">${money(v.amount*pct)}</td>
+      <td>${isExample?"":`<button class="icon-btn" title="Өшіру" data-del-visit="${esc(v.id)}">✕</button>`}</td></tr>`).join("")
+    : `<tr><td colspan="6" class="empty">Бұл кезеңде жазба жоқ</td></tr>`;
+
+  $("#expBody").innerHTML = exps.length ? exps.map(e=>`<tr>
+      <td class="num" style="white-space:nowrap">${fmtDate(e.date)}</td><td>${esc(e.category)}</td>
+      <td class="muted">${esc(e.note)}</td><td class="r">${money(e.amount)}</td>
+      <td>${isExample?"":`<button class="icon-btn" title="Өшіру" data-del-exp="${esc(e.id)}">✕</button>`}</td></tr>`).join("")
+    : `<tr><td colspan="5" class="empty">Бұл кезеңде шығын жоқ. Жоғарыдағы формамен қосыңыз.</td></tr>`;
+}
+
+function niceMax(v){ if(v<=0) return 1000; const p=Math.pow(10,Math.floor(Math.log10(v))); const f=v/p; return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p; }
+
+function renderChart(visits, pct, a, b){
+  const byKey = {}; let monthly=false;
+  let keys=[];
+  const minD = visits.length? visits.reduce((m,v)=>v.date<m?v.date:m, visits[0].date) : today();
+  const maxD = visits.length? visits.reduce((m,v)=>v.date>m?v.date:m, visits[0].date) : today();
+  let start = a.startsWith("0000")? minD : a, end = b.startsWith("9999")? maxD : b;
+  const spanDays = (new Date(end)-new Date(start))/864e5;
+  if(spanDays>62) monthly=true;
+  visits.forEach(v=>{ const k = monthly? v.date.slice(0,7) : v.date; byKey[k]=(byKey[k]||0)+v.amount*pct; });
+  if(monthly){ let d=new Date(start.slice(0,7)+"-01"); const e=end.slice(0,7); while(iso(d).slice(0,7)<=e){ keys.push(iso(d).slice(0,7)); d=new Date(d.getFullYear(),d.getMonth()+1,1); } }
+  else { let d=new Date(start); const e=new Date(end); while(d<=e){ keys.push(iso(d)); d.setDate(d.getDate()+1);} }
+  if(!keys.length){ $("#chart").innerHTML='<div class="empty">Дерек жоқ</div>'; return; }
+  const W=440,H=230,L=46,R=6,T=10,B=26; const iw=W-L-R, ih=H-T-B;
+  const max = niceMax(Math.max(0,...keys.map(k=>byKey[k]||0)));
+  const bw = iw/keys.length; const t=today();
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Күн сайынғы табыс">`;
+  for(let i=0;i<=4;i++){ const val=max*i/4, y=T+ih-ih*i/4;
+    svg+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
+    svg+=`<text x="${L-6}" y="${y+4}" text-anchor="end" font-size="12" fill="var(--muted)">${val>=1000? nf.format(val/1000)+"k" : nf.format(val)}</text>`; }
+  const labelEvery = Math.ceil(keys.length/10);
+  keys.forEach((k,i)=>{ const v=byKey[k]||0; const h=ih*v/max; const x=L+i*bw+bw*0.15; const w=Math.max(1,bw*0.7);
+    const cur = monthly? k===t.slice(0,7) : k===t;
+    if(v>0) svg+=`<rect x="${x.toFixed(1)}" y="${(T+ih-h).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="var(--accent)" opacity="${cur?1:.75}"><title>${monthly?k:fmtDate(k)}: ${money(v)}</title></rect>`;
+    if(i%labelEvery===0){ const lab = monthly? MONTHS[+k.slice(5,7)-1] : String(+k.slice(8,10));
+      svg+=`<text x="${(L+i*bw+bw/2).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="12" fill="var(--muted)">${lab}</text>`; } });
+  svg+=`</svg>`;
+  $("#chart").innerHTML = svg + `<div class="sub">Әр баған — шебердің ${monthly?"айлық":"күндік"} үлесі</div>`;
+}
+
+function renderServices(visits){
+  const m={}; visits.forEach(v=>{ const k=v.service||"—"; (m[k]=m[k]||{n:0,s:0}); m[k].n++; m[k].s+=+v.amount||0; });
+  const list = Object.entries(m).sort((a,b)=>b[1].s-a[1].s).slice(0,8);
+  if(!list.length){ $("#byService").innerHTML='<div class="empty">Дерек жоқ</div>'; return; }
+  const top=list[0][1].s||1;
+  $("#byService").innerHTML = list.map(([k,o])=>`<div class="bar-row"><span style="min-width:0;overflow-wrap:anywhere">${esc(k)} <span class="muted">× ${o.n}</span></span><span class="num">${money(o.s)}</span><div class="track"><div class="fill" style="width:${(o.s/top*100).toFixed(1)}%"></div></div></div>`).join("");
+}
+
+/* ---------- toast ---------- */
+let tt; function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(tt); tt=setTimeout(()=>t.hidden=true,3200); }
+
+/* ---------- tabs & periods ---------- */
+function showTab(tab){
+  S.tab=tab; $$("nav.tabs button").forEach(b=>b.setAttribute("aria-selected", String(b.dataset.tab===tab)));
+  $$("[data-view]").forEach(s=>s.hidden = s.dataset.view!==tab);
+  const showSummary = tab==="overview"||tab==="visits"||tab==="expenses";
+  $("#tiles").hidden=!showSummary; $("#periods").hidden=!showSummary;
+  try{ localStorage.setItem(LS+"-tab",tab); }catch(e){}
+}
+$$("nav.tabs button").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
+$$("#periods .chip").forEach(c=>c.addEventListener("click",()=>{
+  S.period=c.dataset.p; $$("#periods .chip").forEach(x=>x.setAttribute("aria-pressed",String(x===c)));
+  $("#customRange").hidden = S.period!=="custom"; render(); }));
+$("#fromDate").addEventListener("change",e=>{S.from=e.target.value;render();});
+$("#toDate").addEventListener("change",e=>{S.to=e.target.value;render();});
+
+/* ---------- manual forms ---------- */
+const rid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+$("#vDate").value=today(); $("#eDate").value=today();
+$("#visitForm").addEventListener("submit",async e=>{ e.preventDefault();
+  const v={id:rid("m"),date:$("#vDate").value,client:$("#vClient").value.trim(),service:$("#vService").value.trim(),amount:+$("#vAmount").value||0,source:"manual",addedAt:Date.now()};
+  try{ await putDoc("visits",v); toast("Жазба қосылды"); $("#vClient").value=$("#vService").value=$("#vAmount").value=""; }catch(err){ toast("Сақталмады: "+(err.message||err.code)); } });
+$("#expForm").addEventListener("submit",async e=>{ e.preventDefault();
+  const x={id:rid("e"),date:$("#eDate").value,category:$("#eCat").value,amount:+$("#eAmount").value||0,note:$("#eNote").value.trim(),addedAt:Date.now()};
+  try{ await putDoc("expenses",x); toast("Шығын қосылды"); $("#eAmount").value=$("#eNote").value=""; }catch(err){ toast("Сақталмады: "+(err.message||err.code)); } });
+document.addEventListener("click",async e=>{
+  const dv=e.target.closest("[data-del-visit]"), de=e.target.closest("[data-del-exp]");
+  try{ if(dv){ await delDoc("visits",dv.dataset.delVisit); toast("Өшірілді"); } if(de){ await delDoc("expenses",de.dataset.delExp); toast("Өшірілді"); } }catch(err){ toast("Өшірілмеді: "+(err.message||err.code)); }
+});
+
+/* ---------- import: parsing helpers ---------- */
+const FIELDS = [
+  ["date","Күні",["дата","date","күні","күн","день","начало","время записи","визит"]],
+  ["time","Уақыты",["время","уақыт","time","час"]],
+  ["service","Қызмет",["услуг","қызмет","service","наименован","процедур"]],
+  ["client","Клиент",["клиент","client","покупател","имя"]],
+  ["master","Шебер",["сотрудник","мастер","шебер","исполнител","специалист","master","staff","employee"]],
+  ["amount","Бағасы",["стоимост","сумма","цена","итого","оплачен","к оплате","баға","сома","price","amount","total","выручк"]],
+  ["status","Күйі",["статус","status","күйі","состояни"]],
+];
+const norm = s => String(s??"").toLowerCase().replace(/ё/g,"е").trim();
+function matchField(h){ h=norm(h); if(!h) return null;
+  // "дата и время" counts as date; amount keywords win over generic ones
+  for(const f of ["amount","master","service","client","status","date","time"]){ const def=FIELDS.find(x=>x[0]===f); if(def[2].some(k=>h.includes(k))) return f; } return null; }
+function detect(rows){
+  let best=-1, bestScore=0;
+  for(let i=0;i<Math.min(rows.length,25);i++){ const sc=new Set(rows[i].map(matchField).filter(Boolean)).size; if(sc>bestScore){bestScore=sc;best=i;} }
+  if(bestScore<2){ const w=Math.max(...rows.slice(0,5).map(r=>r.length)); return {header:-1, headers:Array.from({length:w},(_,i)=>"Баған "+(i+1)), map:{}}; }
+  const headers=rows[best].map((h,i)=>String(h||"").trim()||("Баған "+(i+1))); const map={};
+  headers.forEach((h,i)=>{ const f=matchField(h); if(f && map[f]===undefined) map[f]=i; });
+  return {header:best, headers, map};
+}
+function parseDate(v){
+  if(v==null||v==="") return null;
+  if(v instanceof Date && !isNaN(v)) return {date:iso(v), time: (v.getHours()||v.getMinutes())? pad(v.getHours())+":"+pad(v.getMinutes()) : ""};
+  if(typeof v==="number" && v>20000 && v<80000){ const d=new Date(Math.round((v-25569)*864e5)); const utc=new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),d.getUTCHours(),d.getUTCMinutes()); return parseDate(utc); }
+  const s=String(v).trim(); let m, time="";
+  const tm=s.match(/(\d{1,2}):(\d{2})/); if(tm) time=pad(tm[1])+":"+tm[2];
+  if((m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/))) return {date:`${m[1]}-${pad(m[2])}-${pad(m[3])}`,time};
+  if((m=s.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{2,4})/))){ const y=m[3].length===2?"20"+m[3]:m[3]; return {date:`${y}-${pad(m[2])}-${pad(m[1])}`,time}; }
+  const MP=[["янв",0],["фев",1],["мар",2],["апр",3],["мая",4],["май",4],["июн",5],["июл",6],["авг",7],["сен",8],["окт",9],["ноя",10],["дек",11],
+    ["қаң",0],["ақп",1],["нау",2],["сәу",3],["мам",4],["мау",5],["шіл",6],["там",7],["қыр",8],["қаз",9],["қар",10],["жел",11]];
+  if((m=norm(s).match(/(\d{1,2})\s+([а-яәіңғүұқөһ]+)\.?\s*(\d{4})?/))){ const hit=MP.find(([p])=>m[2].startsWith(p));
+    if(hit) return {date:`${m[3]||new Date().getFullYear()}-${pad(hit[1]+1)}-${pad(m[1])}`,time}; }
+  return null;
+}
+function parseMoney(v){ if(typeof v==="number") return v; const s=String(v??"").replace(/\s| /g,"").replace(/[^\d.,-]/g,"");
+  if(!s) return NaN; const t = /,\d{1,2}$/.test(s)? s.replace(/\./g,"").replace(",",".") : s.replace(/,/g,""); return parseFloat(t); }
+const CANCEL = ["отмен","не приш","неявк","cancel","no show","бас тарт","келмеді","удален"];
+function hash(s){ let h=5381; for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return (h>>>0).toString(36); }
+
+function buildRecords(){
+  const P=S.pending; const {rows, header, map}=P; const out=[]; let cancelled=0, bad=0;
+  const body = rows.slice(header+1);
+  for(const r of body){
+    if(!r || r.every(c=>c===""||c==null)) continue;
+    const cell = f => map[f]!==undefined && map[f]!=="" ? r[map[f]] : "";
+    const d = parseDate(cell("date")); const amt = parseMoney(cell("amount"));
+    if(!d || !isFinite(amt)){ bad++; continue; }
+    const master = String(cell("master")??"").trim();
+    if(P.master && master!==P.master) continue;
+    const status = norm(cell("status"));
+    if(status && CANCEL.some(c=>status.includes(c))){ cancelled++; continue; }
+    let time = d.time; const tv=cell("time"); if(tv!==""){ const t2=parseDate(tv); if(t2&&t2.time) time=t2.time; else if(typeof tv==="number"&&tv<1){ const mins=Math.round(tv*1440); time=pad(Math.floor(mins/60))+":"+pad(mins%60);} else { const mm=String(tv).match(/(\d{1,2}):(\d{2})/); if(mm) time=pad(mm[1])+":"+mm[2]; } }
+    const rec={date:d.date,time,client:String(cell("client")??"").trim(),service:String(cell("service")??"").trim(),master,amount:Math.round(amt*100)/100,source:"dikidi"};
+    rec.id="d"+hash([rec.date,rec.time,norm(rec.client),norm(rec.service),rec.amount].join("|"));
+    out.push(rec);
+  }
+  // identical rows inside one file (same client, same time, same service) are merged
+  const uniq=[...new Map(out.map(r=>[r.id,r])).values()];
+  return {list:uniq, cancelled, bad};
+}
+
+function openMapping(rows){
+  rows = rows.map(r=>Array.isArray(r)? r : []);
+  if(!rows.length){ toast("Файлда дерек табылмады"); return; }
+  const det=detect(rows);
+  S.pending={rows, header:det.header, headers:det.headers, map:det.map, master:""};
+  // master column: pick remembered name if present
+  const masters = masterOptions(); if(S.settings.master && masters.includes(S.settings.master)) S.pending.master=S.settings.master;
+  drawMapping(); $("#mapCard").hidden=false; $("#mapCard").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function masterOptions(){ const P=S.pending; if(P.map.master===undefined||P.map.master==="") return [];
+  return [...new Set(P.rows.slice(P.header+1).map(r=>String(r[P.map.master]??"").trim()).filter(Boolean))].sort(); }
+function drawMapping(){
+  const P=S.pending;
+  $("#mapFields").innerHTML = FIELDS.map(([f,label])=>`<label class="f">${label}<select data-map="${f}"><option value="">—</option>${P.headers.map((h,i)=>`<option value="${i}" ${P.map[f]===i?"selected":""}>${esc(h)}</option>`).join("")}</select></label>`).join("");
+  $$("#mapFields select").forEach(s=>s.addEventListener("change",()=>{ P.map[s.dataset.map]= s.value===""? undefined : +s.value; drawMapping(); }));
+  const ms=masterOptions();
+  $("#masterSel").innerHTML = `<option value="">Барлық шеберлер</option>` + ms.map(m=>`<option ${m===P.master?"selected":""}>${esc(m)}</option>`).join("");
+  $("#masterSel").disabled = !ms.length;
+  drawPreview();
+}
+function drawPreview(){
+  const {list,cancelled,bad}=buildRecords();
+  const have=new Set(S.visits.map(v=>v.id));
+  const fresh=list.filter(r=>!have.has(r.id));
+  const sum=fresh.reduce((s,r)=>s+r.amount,0);
+  S.pending.fresh=fresh;
+  const missing = ["date","amount"].filter(f=>S.pending.map[f]===undefined);
+  $("#importStats").innerHTML = missing.length
+    ? `<b>Күні мен бағасы бар бағандарды таңдаңыз</b>, сонда жазбалар оқылады.`
+    : `Табылды <b class="num">${list.length}</b> жазба: <b class="num">${fresh.length}</b> жаңа (${money(sum)}), ${list.length-fresh.length} бұрын енгізілген.` +
+      (cancelled?` Бас тартылған ${cancelled} жазба есепке алынбады.`:"") + (bad?` ${bad} жолда күн немесе баға оқылмады.`:"");
+  $("#previewBody").innerHTML = list.slice(0,10).map(r=>`<tr><td class="num" style="white-space:nowrap">${fmtDate(r.date)} ${esc(r.time)}</td><td>${esc(r.client)}</td><td>${esc(r.service)}</td><td class="r">${money(r.amount)}</td><td>${have.has(r.id)?'<span class="pill">бар</span>':'<span class="pill ok">жаңа</span>'}</td></tr>`).join("") || `<tr><td colspan="5" class="empty">Жазба жоқ</td></tr>`;
+  $("#doImport").disabled=!fresh.length; $("#doImport").textContent = fresh.length? `${fresh.length} жазбаны қосу` : "Қосатын жаңа жазба жоқ";
+}
+$("#masterSel").addEventListener("change",e=>{ S.pending.master=e.target.value; drawPreview(); });
+$("#cancelImport").addEventListener("click",()=>{ S.pending=null; $("#mapCard").hidden=true; });
+$("#doImport").addEventListener("click",async()=>{
+  const P=S.pending; if(!P||!P.fresh.length) return; const btn=$("#doImport"); btn.disabled=true;
+  const list=P.fresh.map(r=>Object.assign({},r,{addedAt:Date.now()}));
+  try{
+    await putMany("visits",list,(d,t)=>btn.textContent=`Сақталуда… ${d}/${t}`);
+    if(P.master && P.master!==S.settings.master){ S.settings.master=P.master; await saveSettings(); }
+    toast(`${list.length} жазба қосылды`); S.pending=null; $("#mapCard").hidden=true; showTab("overview");
+  }catch(err){ toast("Сақталмады: "+(err.message||err.code)); btn.disabled=false; drawPreview(); }
+});
+
+function decodeText(buf){
+  const u8=new Uint8Array(buf);
+  try{ return new TextDecoder("utf-8",{fatal:true}).decode(u8).replace(/^\ufeff/,""); }
+  catch(e){ try{ return new TextDecoder("windows-1251").decode(u8); }catch(e2){ return new TextDecoder().decode(u8); } }
+}
+function parseDelimited(txt){
+  const first=txt.split(/\r?\n/).find(l=>l.trim())||"";
+  const sep = first.includes("\t")?"\t" : (first.split(";").length>=first.split(",").length?";":",");
+  const rows=[]; let row=[], cell="", q=false;
+  for(let i=0;i<txt.length;i++){ const c=txt[i];
+    if(q){ if(c==='"'){ if(txt[i+1]==='"'){cell+='"';i++;} else q=false; } else cell+=c; }
+    else if(c==='"' && cell==="") q=true;
+    else if(c===sep){ row.push(cell.trim()); cell=""; }
+    else if(c==="\n"||c==="\r"){ if(c==="\r"&&txt[i+1]==="\n") i++; row.push(cell.trim()); rows.push(row); row=[]; cell=""; }
+    else cell+=c; }
+  if(cell||row.length){ row.push(cell.trim()); rows.push(row); }
+  return rows;
+}
+function readFile(file){
+  const isText=/\.(csv|txt|tsv)$/i.test(file.name);
+  if(!isText && typeof XLSX==="undefined"){ toast("Excel оқитын кітапхана жүктелмеді. Интернетті тексеріп, бетті жаңартыңыз."); return; }
+  const fr=new FileReader();
+  fr.onload=()=>{ try{
+      if(isText){ openMapping(parseDelimited(decodeText(fr.result))); return; }
+      const wb=XLSX.read(new Uint8Array(fr.result),{type:"array",cellDates:true});
+      let rows=[]; for(const name of wb.SheetNames){ const r=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,raw:true,defval:""}); if(r.length>rows.length) rows=r; }
+      openMapping(rows);
+    }catch(err){ toast("Файл оқылмады. Dikidi-ден Excel немесе CSV ретінде жүктеп көріңіз."); } };
+  fr.readAsArrayBuffer(file);
+}
+$("#fileInput").addEventListener("change",e=>{ const f=e.target.files[0]; if(f) readFile(f); e.target.value=""; });
+const drop=$("#drop");
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over");}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
+drop.addEventListener("drop",e=>{ const f=e.dataTransfer.files[0]; if(f) readFile(f); });
+$("#pasteBtn").addEventListener("click",()=>{
+  const txt=$("#pasteBox").value.trim(); if(!txt){ toast("Алдымен кестені қойыңыз"); return; }
+  openMapping(parseDelimited(txt));
+});
+
+/* ---------- settings ---------- */
+$("#savePct").addEventListener("click",async()=>{ const v=+$("#pctInput").value; if(!(v>0&&v<=100)){ toast("1 мен 100 аралығында сан енгізіңіз"); return; }
+  S.settings.percent=v; try{ await saveSettings(); toast("Пайыз сақталды: "+v+"%"); }catch(err){ toast("Сақталмады"); } });
+$("#copyBackup").addEventListener("click",()=>{
+  const txt=JSON.stringify({visits:S.visits,expenses:S.expenses,settings:S.settings}); const box=$("#backupBox"); box.value=txt;
+  navigator.clipboard?.writeText(txt).then(()=>toast("Көшірілді. Оны жазбаларыңызға қойып сақтаңыз."), ()=>{ box.select(); toast("Мәтін белгіленді, Ctrl+C басыңыз"); }) ?? (box.select(), toast("Мәтін белгіленді, Ctrl+C басыңыз"));
+});
+$("#restoreBtn").addEventListener("click",async()=>{
+  let d; try{ d=JSON.parse($("#backupBox").value); }catch(e){ toast("Мәтін дұрыс емес. «Көшірмені алу» арқылы алынған мәтінді қойыңыз."); return; }
+  try{ await putMany("visits",d.visits||[]); await putMany("expenses",d.expenses||[]); if(d.settings){ S.settings=Object.assign(S.settings,d.settings); await saveSettings(); } toast("Қалпына келтірілді"); }catch(err){ toast("Қалпына келмеді: "+(err.message||err.code)); }
+});
+function drawWipe(confirming){
+  $("#wipeArea").innerHTML = confirming
+    ? `<div class="confirm">Барлық ${S.visits.length} жазба мен ${S.expenses.length} шығын өшеді. Сенімдісіз бе? <button class="btn danger" id="wipeYes">Иә, өшіру</button><button class="btn ghost" id="wipeNo">Жоқ</button></div>`
+    : `<button class="btn danger" id="wipeBtn">Барлық жазбалар мен шығындарды өшіру</button>`;
+}
+$("#wipeArea").addEventListener("click",async e=>{
+  if(e.target.id==="wipeBtn") drawWipe(true);
+  else if(e.target.id==="wipeNo") drawWipe(false);
+  else if(e.target.id==="wipeYes"){ try{
+      if(db){ for(const v of [...S.visits]) await db.collection("visits").doc(v.id).delete(); for(const x of [...S.expenses]) await db.collection("expenses").doc(x.id).delete(); }
+      else { S.visits=[]; S.expenses=[]; lsSave(); render(); }
+      toast("Барлығы өшірілді"); }catch(err){ toast("Өшірілмеді"); } drawWipe(false); }
+});
+
+/* ---------- boot ---------- */
+let savedTab="overview"; try{ savedTab=localStorage.getItem(LS+"-tab")||"overview"; }catch(e){}
+showTab(savedTab);
+initStore();
+})();
+</script>
